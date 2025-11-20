@@ -86,12 +86,13 @@
             background-color: var(--bg-color);
             border-bottom: 2px solid var(--divider-color);
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             padding: 0 2rem;
             z-index: 20;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             position: relative;
+            gap: 4rem;
         }
 
         .player-stats {
@@ -99,10 +100,9 @@
             flex-direction: column;
             justify-content: center;
             min-width: 150px;
+            text-align: center;
+            align-items: center;
         }
-        
-        .p1-stats { align-items: flex-start; text-align: left; }
-        .p2-stats { align-items: flex-end; text-align: right; }
 
         .vs-badge {
             font-size: 1.5rem;
@@ -173,6 +173,25 @@
             transition: opacity 1s;
         }
 
+        /* Finish Line */
+        .finish-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: repeating-linear-gradient(
+                45deg,
+                #00ff00,
+                #00ff00 10px,
+                #000000 10px,
+                #000000 20px
+            );
+            z-index: 1;
+            opacity: 0.8;
+            border-top: 2px solid #fff;
+        }
+
         .ball-name {
             font-size: 1.1rem;
             font-weight: bold;
@@ -212,7 +231,7 @@
             transition: transform 0.1s, width 0.2s, height 0.2s, top 0.2s, left 0.2s, border-color 0.2s;
             border-radius: 4px;
             z-index: 2; 
-            border: 2px solid transparent; /* Initial border for transition */
+            border: 2px solid transparent; 
         }
         
         .wall.is-hit {
@@ -391,11 +410,13 @@
         <div class="lane" id="lane1">
             <div class="walls-layer" id="p1Walls"></div>
             <canvas id="c1"></canvas>
+            <div class="finish-line"></div>
         </div>
         <div class="lane-divider"></div>
         <div class="lane" id="lane2">
             <div class="walls-layer" id="p2Walls"></div>
             <canvas id="c2"></canvas>
+            <div class="finish-line"></div>
         </div>
     </div>
 
@@ -514,20 +535,25 @@
          * Core Game Logic
          */
         
-        const BIG_LIMIT = 10n ** 1000n; 
-        const EXP_CAP = 12000; 
+        // Safe limit for BigInt exponentiation to prevent crash (Approx 10^7000)
+        // This covers God Mode (max 10^6400) comfortably.
+        const BIG_LIMIT = 10n ** 7000n; 
+        const EXP_CAP = 7000; 
 
         function formatBigInt(n) {
-            if (n > BIG_LIMIT) return "INFINITY";
+            if (n > BIG_LIMIT) return "∞"; // Use infinity symbol
+            
             if (n < 1000000n) return n.toLocaleString();
+            
             const s = n.toString();
-            if (s.length < 7) return n.toString(); 
             const exponent = s.length - 1;
-            const mantissa = s.substring(0, Math.min(4, s.length)); 
-            if (mantissa.length > 1) {
-                return `${mantissa[0]}.${mantissa.substring(1)}e${exponent}`;
-            }
-            return `${mantissa[0]}e${exponent}`;
+            // Format: 1.234×10^N
+            const mantissaStr = s.substring(0, 4); 
+            const formattedMantissa = mantissaStr.length > 1 
+                ? mantissaStr[0] + "." + mantissaStr.substring(1) 
+                : mantissaStr;
+                
+            return `${formattedMantissa}×10^${exponent}`;
         }
 
         const fibCache = new Map();
@@ -614,7 +640,6 @@
                 this.isSucked = false;
                 this.lastHp = this.currentHp;
                 
-                // Gambler effect
                 this.gamblerTimer = 0;
                 this.gamblerColor = '';
             }
@@ -636,7 +661,7 @@
             
             setGamblerEffect(color) {
                 this.gamblerColor = color;
-                this.gamblerTimer = 30; // 0.5s visual effect
+                this.gamblerTimer = 30; 
             }
 
             update(singularityBall = null) {
@@ -714,13 +739,11 @@
                     this.el.classList.remove('is-hit');
                 }
                 
-                // Apply Gambler Visuals via Inline Styles to override classes
                 if (this.gamblerTimer > 0) {
                     this.gamblerTimer--;
                     this.el.style.border = `2px solid ${this.gamblerColor}`;
                     this.el.style.boxShadow = `0 0 20px ${this.gamblerColor}`;
                 } else {
-                    // Clear inline styles so classes can take over again if needed
                     this.el.style.border = '';
                     this.el.style.boxShadow = '';
                 }
@@ -945,7 +968,6 @@
                 if (broken) this.onWallDestroyed(wall.maxHp);
                 this.hits++;
                 
-                // Trigger Gambler Visual Effect
                 if (['godGambler', 'normalGambler', 'madGambler'].includes(this.type)) {
                     wall.setGamblerEffect(this.config.color);
                 }
@@ -999,6 +1021,7 @@
                     case 'factorialSpeed': d = this.damage; this.damage = this.damage * BigInt(this.hits + 1); break;
                     case 'power': 
                         d = this.damage; 
+                        // Safe limit for power ball growth
                         if (this.damage < BIG_LIMIT) {
                             this.damage = this.damage ** 2n; 
                         }
@@ -1012,6 +1035,7 @@
                     case 'godGambler': 
                         let min = wall.currentHp / 10n;
                         if (min < 1n) min = 1n;
+                        // Use cap for god gambler
                         let randExp = Math.min(Math.floor(Math.random() * 100000001), EXP_CAP); 
                         let extra = 10n ** BigInt(randExp);
                         d = min + extra;
