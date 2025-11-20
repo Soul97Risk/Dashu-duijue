@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,17 +8,59 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         
+        :root {
+            --bg-color: #050505;
+            --lane-bg: #0a0a0a;
+            --text-color: #fff;
+            --text-dim: #aaa;
+            --divider-color: #333;
+            --wall-bg: #fff;
+            --wall-text: #000;
+            --wall-shadow: rgba(255,255,255,0.2);
+            --wall-gravitized: #2a0a3d;
+            --wall-gravitized-text: #fff;
+            --wall-hit: #ffcccc;
+            --panel-bg: rgba(10, 10, 10, 0.95);
+            --panel-border: #333;
+            --input-bg: #1a1a1a;
+            --input-border: #444;
+            --scanline-opacity: 0.1;
+            --bubble-bg: rgba(255, 255, 255, 0.9);
+            --bubble-text: #000;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #e0e0e0;
+            --lane-bg: #f5f5f5;
+            --text-color: #111;
+            --text-dim: #555;
+            --divider-color: #ccc;
+            --wall-bg: #333;
+            --wall-text: #fff;
+            --wall-shadow: rgba(0,0,0,0.2);
+            --wall-gravitized: #e0d0f0;
+            --wall-gravitized-text: #000;
+            --wall-hit: #ff9999;
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --panel-border: #ccc;
+            --input-bg: #fff;
+            --input-border: #ccc;
+            --scanline-opacity: 0.03;
+            --bubble-bg: rgba(0, 0, 0, 0.9);
+            --bubble-text: #fff;
+        }
+        
         body {
             font-family: 'JetBrains Mono', monospace;
-            background-color: #050505;
-            color: #fff;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow: hidden;
             touch-action: none;
             margin: 0;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         /* CRT Scanline Effect */
@@ -28,19 +70,88 @@
             top: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, var(--scanline-opacity)) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
             z-index: 50;
         }
 
+        /* Header Bar */
+        .game-header {
+            height: 80px;
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--divider-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .player-stats {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 150px;
+        }
+        
+        .p1-stats { align-items: flex-start; text-align: left; }
+        .p2-stats { align-items: flex-end; text-align: right; }
+
+        .vs-badge {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            bottom: 20px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+            z-index: 60;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .theme-toggle:hover {
+            background-color: var(--input-bg);
+            transform: translateX(-50%) scale(1.1);
+        }
+
         .game-container {
+            flex: 1;
             display: grid;
             grid-template-columns: 1fr 2px 1fr;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000;
+            background-color: var(--bg-color);
             position: relative;
+            overflow: hidden;
+            transition: all 1s ease;
+        }
+        
+        /* True Black Hole Mode: Remove Divider */
+        .game-container.singularity-mode {
+             grid-template-columns: 1fr;
+        }
+        .game-container.singularity-mode .lane-divider {
+            display: none;
+        }
+        .game-container.singularity-mode .lane {
+            border: none;
+            background: transparent;
         }
 
         .lane {
@@ -48,39 +159,26 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            background: #0a0a0a;
+            background: var(--lane-bg);
+            transition: background-color 0.3s;
         }
 
         .lane-divider {
-            background: linear-gradient(to bottom, transparent, #333, #333, transparent);
+            background: linear-gradient(to bottom, transparent, var(--divider-color), var(--divider-color), transparent);
             width: 2px;
         }
 
-        /* Top Info Panel */
-        .info-panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            pointer-events: none;
-        }
-
         .ball-name {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: bold;
             text-shadow: 0 0 5px currentColor;
         }
 
         .ball-damage {
-            font-size: 0.8rem;
-            color: #aaa;
+            font-size: 0.9rem;
+            color: var(--text-dim);
             margin-top: 4px;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         /* Walls Area */
@@ -97,22 +195,44 @@
             position: absolute;
             left: 5%;
             width: 90%;
-            height: 60px; /* 加厚墙壁防止高速穿透 */
-            background: #fff;
+            height: 60px;
+            background: var(--wall-bg);
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #000;
+            color: var(--wall-text);
             font-weight: bold;
             font-size: 12px;
-            box-shadow: 0 0 10px rgba(255,255,255,0.2);
-            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 0 10px var(--wall-shadow);
+            transition: transform 0.1s, width 0.2s, height 0.2s, top 0.2s, left 0.2s;
             border-radius: 4px;
+            z-index: 2; /* Behind ball */
+        }
+        
+        .wall.is-hit {
+            background-color: var(--wall-hit) !important;
         }
 
         .wall.gravitized {
             border: 2px solid #9400D3;
-            box-shadow: 0 0 10px #9400D3;
+            box-shadow: 0 0 15px #9400D3;
+            background-color: var(--wall-gravitized);
+            color: var(--wall-gravitized-text);
+        }
+
+        .wall.singularized {
+            border: 2px solid #000;
+            background-color: #000;
+            color: #fff;
+            box-shadow: 0 0 20px #000;
+            transform: scale(0.95);
+        }
+
+        /* True Black Hole Sucking Effect */
+        .wall.being-sucked {
+            transition: all 0.1s linear;
+            transform: scale(0.1) rotate(720deg);
+            opacity: 0.5;
         }
 
         .wall-label {
@@ -121,10 +241,11 @@
             top: 50%;
             transform: translateY(-50%);
             font-size: 10px;
-            color: #444;
-            background: rgba(255,255,255,0.8);
+            color: var(--text-dim);
+            background: var(--bg-color);
             padding: 1px 3px;
             border-radius: 2px;
+            border: 1px solid var(--divider-color);
         }
 
         /* Canvas for Balls */
@@ -143,16 +264,16 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(10, 10, 10, 0.95);
-            border: 1px solid #333;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             padding: 2rem;
             border-radius: 0.5rem;
             text-align: center;
             z-index: 100;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             width: 90%;
             max-width: 600px;
-            color: #eee;
+            color: var(--text-color);
             backdrop-filter: blur(5px);
         }
 
@@ -162,13 +283,13 @@
 
         /* Form Elements */
         .form-group { margin-bottom: 1.5rem; text-align: left; }
-        label { display: block; color: #888; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+        label { display: block; color: var(--text-dim); font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
         
         select {
             width: 100%;
-            background: #1a1a1a;
-            border: 1px solid #444;
-            color: #fff;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
             padding: 0.75rem;
             border-radius: 4px;
             outline: none;
@@ -178,42 +299,41 @@
             cursor: pointer;
             transition: border-color 0.2s;
         }
-        select:hover { border-color: #666; }
-        select:focus { border-color: #fff; }
+        select:hover { border-color: var(--text-dim); }
+        select:focus { border-color: var(--text-color); }
         
-        /* Optgroup styling adjustment for some browsers */
         optgroup {
-            background: #111;
-            color: #aaa;
+            background: var(--bg-color);
+            color: var(--text-dim);
             font-style: normal;
             font-weight: bold;
         }
         option {
-            background: #1a1a1a;
-            color: #fff;
+            background: var(--input-bg);
+            color: var(--text-color);
             padding-left: 10px;
         }
 
-        button {
+        button.action-btn {
             width: 100%;
-            background: #fff;
-            color: #000;
+            background: var(--text-color);
+            color: var(--bg-color);
             border: none;
             padding: 1rem;
             font-weight: bold;
             font-family: 'JetBrains Mono', monospace;
             text-transform: uppercase;
             cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
+            transition: transform 0.1s, opacity 0.2s;
         }
-        button:hover { background: #e0e0e0; }
-        button:active { transform: scale(0.98); }
+        button.action-btn:hover { opacity: 0.9; }
+        button.action-btn:active { transform: scale(0.98); }
 
         .lane-title {
             font-size: 0.8rem;
-            color: #666;
+            color: var(--text-dim);
             margin-bottom: 10px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--divider-color);
             padding-bottom: 5px;
         }
     </style>
@@ -221,15 +341,26 @@
 <body>
     <div class="scanlines"></div>
 
+    <!-- New Header Layout -->
+    <div class="game-header">
+        <div class="player-stats p1-stats">
+            <div class="ball-name" id="p1Name">Player 1</div>
+            <div class="ball-damage" id="p1Dmg">DMG: 0</div>
+        </div>
+        
+        <div class="vs-badge">VS</div>
+        
+        <div class="player-stats p2-stats">
+            <div class="ball-name" id="p2Name">Player 2</div>
+            <div class="ball-damage" id="p2Dmg">DMG: 0</div>
+        </div>
+    </div>
+    
+    <button class="theme-toggle" id="themeBtn" title="Switch Theme">🌓</button>
+
     <div id="gameContainer" class="game-container">
         <!-- Player 1 (Left) -->
         <div class="lane" id="lane1">
-            <div class="info-panel">
-                <div>
-                    <div class="ball-name" id="p1Name">Player 1</div>
-                    <div class="ball-damage" id="p1Dmg">0</div>
-                </div>
-            </div>
             <div class="walls-layer" id="p1Walls"></div>
             <canvas id="c1"></canvas>
         </div>
@@ -238,12 +369,6 @@
 
         <!-- Player 2 (Right) -->
         <div class="lane" id="lane2">
-            <div class="info-panel" style="justify-content: flex-end; text-align: right;">
-                <div>
-                    <div class="ball-name" id="p2Name">Player 2</div>
-                    <div class="ball-damage" id="p2Dmg">0</div>
-                </div>
-            </div>
             <div class="walls-layer" id="p2Walls"></div>
             <canvas id="c2"></canvas>
         </div>
@@ -251,13 +376,16 @@
 
     <!-- Start Menu -->
     <div id="menuPanel" class="ui-panel">
-        <h1 class="text-2xl font-bold mb-6 text-white">ULTIMATE DUEL<br><span class="text-xs font-normal text-gray-500">大数破壁：究极对决</span></h1>
+        <h1 class="text-2xl font-bold mb-6">ULTIMATE DUEL<br><span class="text-xs font-normal opacity-70">大数破壁：究极对决</span></h1>
         
         <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <div class="lane-title">LEFT LANE</div>
                 <label>Ball Type</label>
                 <select id="p1Select">
+                    <optgroup label=">>> 圣光类型 (Holy Light)">
+                        <option value="holyLight">圣光球 (Holy Light)</option>
+                    </optgroup>
                     <optgroup label=">>> 速度类型 (Speed)">
                         <option value="speed">速度球 (Speed Boost)</option>
                         <option value="x2Speed">X2速度球 (X2 Speed)</option>
@@ -265,6 +393,7 @@
                     </optgroup>
                     <optgroup label=">>> 自乘类型 (Growth)">
                         <option value="factorial">自我阶乘球 (Factorial)</option>
+                        <option value="loopDamage">循环伤害球 (Loop Damage)</option>
                         <option value="power">幂球 (Power Ball)</option>
                         <option value="superFactorial">超阶乘球 (Super Factorial)</option>
                         <option value="fibonacci">斐波那契球 (Fibonacci)</option>
@@ -276,10 +405,10 @@
                         <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
                     </optgroup>
                     <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="trueBlackHole">真：黑洞球 (True: Black Hole)</option>
+                        <option value="blackHole">黑洞球 (Black Hole)</option>
                         <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
                         <option value="infinity">无限球 (Infinity)</option>
-                        <option value="blackHole">黑洞球 (Black Hole)</option>
-                        <option value="holyLight">圣光球 (Holy Light)</option>
                         <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
                         <option value="percentage">百分比球 (Percentage)</option>
                         <option value="thousand">1000球 (Thousand)</option>
@@ -290,6 +419,9 @@
                 <div class="lane-title">RIGHT LANE</div>
                 <label>Ball Type</label>
                 <select id="p2Select">
+                    <optgroup label=">>> 圣光类型 (Holy Light)">
+                        <option value="holyLight">圣光球 (Holy Light)</option>
+                    </optgroup>
                     <optgroup label=">>> 速度类型 (Speed)">
                         <option value="speed">速度球 (Speed Boost)</option>
                         <option value="x2Speed">X2速度球 (X2 Speed)</option>
@@ -297,6 +429,7 @@
                     </optgroup>
                     <optgroup label=">>> 自乘类型 (Growth)">
                         <option value="factorial">自我阶乘球 (Factorial)</option>
+                        <option value="loopDamage">循环伤害球 (Loop Damage)</option>
                         <option value="power">幂球 (Power Ball)</option>
                         <option value="superFactorial">超阶乘球 (Super Factorial)</option>
                         <option value="fibonacci">斐波那契球 (Fibonacci)</option>
@@ -308,10 +441,10 @@
                         <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
                     </optgroup>
                     <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="trueBlackHole">真：黑洞球 (True: Black Hole)</option>
+                        <option value="blackHole">黑洞球 (Black Hole)</option>
                         <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
                         <option value="infinity">无限球 (Infinity)</option>
-                        <option value="blackHole">黑洞球 (Black Hole)</option>
-                        <option value="holyLight">圣光球 (Holy Light)</option>
                         <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
                         <option value="percentage">百分比球 (Percentage)</option>
                         <option value="thousand">1000球 (Thousand)</option>
@@ -323,6 +456,7 @@
         <div class="form-group">
             <label>Difficulty Level</label>
             <select id="difficultySelect">
+                <option value="superSimple">超简单 (Super Simple) 10^1~5</option>
                 <option value="simple">简单 (Simple) 10^5~7</option>
                 <option value="medium">中等 (Medium) 10^9~11</option>
                 <option value="hard">困难 (Hard) 10^20~40</option>
@@ -331,15 +465,15 @@
             </select>
         </div>
 
-        <button id="startBtn">INITIALIZE SYSTEM</button>
+        <button id="startBtn" class="action-btn">INITIALIZE SYSTEM</button>
     </div>
 
     <!-- Game Over -->
     <div id="gameOverPanel" class="ui-panel hidden">
-        <h1 class="text-3xl mb-2 text-yellow-500 font-bold">WINNER</h1>
-        <h2 id="winnerText" class="text-xl mb-6 text-white"></h2>
-        <div class="text-xs text-gray-400 mb-8 font-mono bg-gray-900 p-4 rounded" id="statsText"></div>
-        <button id="restartBtn">RESTART SYSTEM</button>
+        <h1 class="text-3xl mb-2 font-bold" style="color: #ffd700;">WINNER</h1>
+        <h2 id="winnerText" class="text-xl mb-6"></h2>
+        <div class="text-xs opacity-70 mb-8 font-mono p-4 rounded border border-gray-600" id="statsText"></div>
+        <button id="restartBtn" class="action-btn">RESTART SYSTEM</button>
     </div>
 
     <script>
@@ -374,6 +508,7 @@
 
         // --- Configuration ---
         const DIFFICULTIES = {
+            superSimple: [1, 2, 3, 5], 
             simple: [5, 6, 7],
             medium: [9, 10, 11],
             hard: [20, 30, 40],
@@ -383,17 +518,20 @@
 
         const BALL_TYPES = {
             // New / Modified Balls
-            x2Speed: { name: "X2速度球", color: "#0000FF", baseDamage: 10n, speed: 2.0 }, // Starts low, doubles every hit
-            factorialSpeed: { name: "阶乘速度球", color: "#FF4500", baseDamage: 1n, speed: 1.8 }, // Speed + Factorial Growth
-            power: { name: "幂球", color: "#800080", baseDamage: 2n, speed: 1.0 }, // Squares damage every hit
-            superFactorial: { name: "超阶乘球", color: "#8B0000", baseDamage: 1n, speed: 1.0 }, // Grows absurdly fast
-            absoluteVictory: { name: "绝对胜利球", color: "#FFFFFF", baseDamage: 0n, speed: 0.5 }, // Instant Win
+            trueBlackHole: { name: "真：黑洞球", color: "#000000", baseDamage: 10n**100n, speed: 0.0 }, // Static but infinite range
+            blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 1000n, speed: 0.9 }, // Buffed base
+            
+            x2Speed: { name: "X2速度球", color: "#0000FF", baseDamage: 10n, speed: 2.0 }, 
+            factorialSpeed: { name: "阶乘速度球", color: "#FF4500", baseDamage: 1n, speed: 1.8 },
+            power: { name: "幂球", color: "#800080", baseDamage: 2n, speed: 1.0 },
+            superFactorial: { name: "超阶乘球", color: "#8B0000", baseDamage: 1n, speed: 1.0 },
+            absoluteVictory: { name: "绝对胜利球", color: "#FFFFFF", baseDamage: 0n, speed: 0.5 },
+            loopDamage: { name: "循环伤害球", color: "#32CD32", baseDamage: 100n, speed: 1.0 },
 
             // Existing
             speed: { name: "速度球", color: "#00FFFF", baseDamage: 100n, speed: 1.3 },
             infinity: { name: "无限球", color: "#FFFFFF", baseDamage: 999n, speed: 1.0 },
             holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 500n, speed: 0.9 },
-            blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 100n, speed: 0.9 },
             godGambler: { name: "上帝赌徒", color: "#FFD700", baseDamage: 1n, speed: 1.0 },
             normalGambler: { name: "普通赌徒", color: "#FFA500", baseDamage: 1n, speed: 1.0 },
             madGambler: { name: "疯狂赌徒", color: "#FF4500", baseDamage: 1n, speed: 1.0 },
@@ -433,46 +571,100 @@
                 document.getElementById(laneId === 0 ? 'p1Walls' : 'p2Walls').appendChild(this.el);
                 this.shakeTimer = 0;
                 
-                this.gravityPoints = [];
+                this.gravitySources = [];
+                this.age = 0;
+                this.isSucked = false; // True Black Hole effect
             }
 
-            addGravityPoint() {
-                this.gravityPoints.push(180);
+            addGravityPoint(sourceBall) {
+                this.gravitySources.push({ ball: sourceBall });
                 this.el.classList.add('gravitized');
             }
 
-            update() {
+            // Override update for singularity logic
+            update(singularityBall = null) {
                 if (this.isBroken) return;
-
-                if (this.gravityPoints.length > 0) {
-                    this.gravityPoints = this.gravityPoints.filter(t => t > 0).map(t => t - 1);
+                
+                // If being sucked by True Black Hole
+                if (singularityBall) {
+                    this.isSucked = true;
+                    this.el.classList.add('being-sucked');
                     
-                    let totalPoints = BigInt(this.gravityPoints.length);
-                    if (totalPoints > 0n && this.currentHp > 0n) {
-                        let dmgPerFrame = (this.currentHp * totalPoints) / 6000n;
-                        if (dmgPerFrame < 1n) dmgPerFrame = 1n;
-                        this.takeDamage(dmgPerFrame, true); 
+                    // Get Ball visual center (in global coords, lane agnostic since divider gone)
+                    // Ball is in center of screen in singularity mode
+                    // Let's just pull everything to center
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2; // Or ball Y
+                    
+                    const rect = this.el.getBoundingClientRect();
+                    const myX = rect.left + rect.width/2;
+                    const myY = rect.top + rect.height/2;
+                    
+                    // Move towards center
+                    const dx = centerX - myX;
+                    const dy = centerY - myY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < 50) {
+                        // EATEN
+                        this.takeDamage(this.maxHp * 1000n, true); // Instant kill
+                        singularityBall.onWallDestroyed(this.maxHp); // Trigger win logic maybe?
+                    } else {
+                        // Move element visually
+                        // Since we are manipulating DOM style top/left which are relative to container...
+                        // This is tricky with lane relative positioning.
+                        // Quick hack: Use transform translate
+                        const speed = 5;
+                        this.el.style.transform = `translate(${dx * 0.05}px, ${dy * 0.05}px) scale(0.8)`;
+                        // Note: This is visual only, but since physics collision for true black hole 
+                        // is global radius check, it's fine.
+                    }
+                    return;
+                }
+
+                this.age++;
+
+                // Handle Standard Black Hole Gravity Points
+                if (this.gravitySources.length > 0) {
+                    let count = BigInt(this.gravitySources.length);
+                    let totalDmg = 0n;
+
+                    if (this.currentHp > 0n) {
+                        // 2% per sec
+                        let percDmg = (this.currentHp * count * 2n) / 6000n; 
+                        if (percDmg < 1n) percDmg = 1n;
+                        totalDmg += percDmg;
+                    }
+                    
+                    // 0.2s tick = 12 frames. Apply Ball Damage.
+                    if (this.age % 12 === 0) {
+                        for (let source of this.gravitySources) {
+                            totalDmg += source.ball.damage;
+                        }
                     }
 
-                    if (this.gravityPoints.length === 0) {
-                        this.el.classList.remove('gravitized');
+                    if (totalDmg > 0n) {
+                        const broken = this.takeDamage(totalDmg, true);
+                        if (broken && this.gravitySources[0]) {
+                            this.gravitySources[0].ball.onWallDestroyed(this.maxHp);
+                        }
                     }
                 }
 
                 let renderY = this.y;
                 if (this.shakeTimer > 0) {
                     renderY += (Math.random() - 0.5) * 10;
-                    this.el.style.backgroundColor = '#ffcccc';
+                    this.el.classList.add('is-hit'); 
                     this.shakeTimer--;
                 } else {
-                    this.el.style.backgroundColor = this.gravityPoints.length > 0 ? '#2a0a3d' : '#fff';
-                    this.el.style.color = this.gravityPoints.length > 0 ? '#fff' : '#000';
+                    this.el.classList.remove('is-hit');
                 }
-                this.el.style.transform = `translateY(${renderY - this.y}px)`;
+                
+                if(!this.isSucked) this.el.style.transform = `translateY(${renderY - this.y}px)`;
             }
 
             takeDamage(amount, isDot = false) {
-                if (this.isBroken) return;
+                if (this.isBroken) return false;
                 this.currentHp -= amount;
                 if (!isDot) this.shakeTimer = 5;
 
@@ -481,8 +673,10 @@
                     this.isBroken = true;
                     this.el.style.opacity = '0';
                     setTimeout(() => this.el.remove(), 500);
+                    return true; 
                 }
                 this.text.innerText = formatBigInt(this.currentHp);
+                return false;
             }
         }
 
@@ -509,6 +703,14 @@
                 this.vx = (Math.random() - 0.5) * 4;
                 this.vy = this.baseSpeed;
 
+                // True Black Hole Setup
+                if (this.type === 'trueBlackHole') {
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.y = window.innerHeight / 3; // Sit high up
+                    game.triggerSingularity(this);
+                }
+
                 this.fibPrev = 1n;
                 this.fibCurr = 1n;
 
@@ -523,15 +725,58 @@
             resize() {
                 this.canvas.width = this.canvas.parentElement.clientWidth;
                 this.canvas.height = this.canvas.parentElement.clientHeight;
+                if (this.type === 'trueBlackHole') {
+                     this.x = this.canvas.width / 2; // Re-center
+                }
+            }
+
+            onWallDestroyed(wallMaxHp) {
+                if (this.type === 'blackHole') {
+                    let multBuff = (this.damage * 2n) / 100n; 
+                    this.damage += multBuff + wallMaxHp;
+                }
+                if (this.type === 'trueBlackHole') {
+                    // True Black Hole wins immediately on consuming anything (per prompt "eats wall direct victory")
+                    game.endGame(this);
+                }
             }
 
             update() {
                 if (this.finished) return;
 
+                // True Black Hole Logic
+                if (this.type === 'trueBlackHole') {
+                    // It doesn't move physically, it just sits there and sucks
+                    // Logic handled in Wall.update via game loop passing this ball
+                    return;
+                }
+
+                // Loop Damage Logic
+                if (this.type === 'loopDamage') {
+                    this.damage += 100n; 
+                }
+
                 // Absolute Victory Check
                 if (this.type === 'absoluteVictory') {
                     game.endGame(this);
                     return;
+                }
+
+                // Black Hole Aura Logic
+                if (this.type === 'blackHole') {
+                    // 0.01s damage (~every frame)
+                    // Check aura collision with walls
+                    for (let w of this.walls) {
+                        if (!w.isBroken) {
+                            let wx = parseFloat(w.el.style.left) / 100 * this.canvas.width;
+                            let wy = w.y;
+                            // Simple dist check to wall center
+                            let dist = Math.sqrt((this.x - (wx+w.el.clientWidth/2))**2 + (this.y - (wy+30))**2);
+                            if (dist < this.radius * 4) { // Aura radius
+                                w.takeDamage(this.damage, true); // True Damage tick
+                            }
+                        }
+                    }
                 }
 
                 // Holy Light Passive
@@ -571,7 +816,6 @@
                 let stepSize = 5;
                 let steps = Math.ceil(speed / stepSize) || 1;
                 
-                // Extra steps for extremely fast new balls
                 if(this.type === 'x2Speed' || this.type === 'factorialSpeed') steps = Math.max(steps, 8);
 
                 for (let i = 0; i < steps; i++) {
@@ -642,7 +886,10 @@
 
             resolveCollision(wall, dx, dy) {
                 let dmg = this.calculateDamage(wall);
-                wall.takeDamage(dmg);
+                const broken = wall.takeDamage(dmg);
+                if (broken && (this.type === 'blackHole')) {
+                    this.onWallDestroyed(wall.maxHp);
+                }
                 this.hits++;
 
                 let dist = Math.sqrt(dx*dx + dy*dy);
@@ -658,18 +905,15 @@
 
                 this.vx += (Math.random() - 0.5) * 2;
                 
-                // Speed Ball logic
                 if (this.type === 'speed') {
                     this.currentSpeedMult *= 1.05; 
                     if(this.currentSpeedMult > 3.0) this.currentSpeedMult = 3.0; 
                 }
                 
-                // Black Hole Logic
                 if (this.type === 'blackHole') {
-                    wall.addGravityPoint();
+                    wall.addGravityPoint(this);
                 }
                 
-                // Holy Light Logic
                 if (this.type === 'holyLight') {
                     this.holyCharge++;
                     if (this.holyCharge >= 10) {
@@ -698,27 +942,21 @@
                 let d = 0n;
                 switch (this.type) {
                     case 'x2Speed':
-                        // Starts low, doubles every hit
                         d = this.damage;
                         this.damage *= 2n;
                         break;
 
                     case 'factorialSpeed':
-                        // n! growth
                         d = this.damage;
                         this.damage = this.damage * BigInt(this.hits + 1);
                         break;
 
                     case 'power':
-                        // Squares damage every hit (Exponent)
                         d = this.damage;
-                        // Prevent instant infinity crash, cap it logically or just let BigInt handle it
-                        // Start 2 -> 4 -> 16 -> 256
                         this.damage = this.damage ** 2n;
                         break;
 
                     case 'superFactorial':
-                        // Approximated as dmg * (hits)^something big or recursive
                         d = this.damage;
                         let multiplier = BigInt(this.hits + 1);
                         this.damage = this.damage * (multiplier * multiplier);
@@ -734,6 +972,10 @@
 
                     case 'blackHole':
                         d = this.damage; 
+                        break;
+                    
+                    case 'loopDamage':
+                        d = this.damage;
                         break;
 
                     case 'speed':
@@ -798,11 +1040,35 @@
                 }
                 
                 if (this.type === 'infinity') this.damage = 9999999999n; 
+                if (this.type === 'trueBlackHole') this.damage = 10n ** 100n; 
                 
                 return d;
             }
 
             draw() {
+                if (this.type === 'trueBlackHole') {
+                    // Special central drawing
+                    // Use global coords approx
+                    // Actually, use this.x/y. If centered, it's width/2.
+                    this.ctx.save();
+                    this.ctx.translate(this.x, this.y);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, 40, 0, Math.PI * 2); // Big center
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.fill();
+                    // Accretion Disk
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = '#A020F0';
+                    this.ctx.lineWidth = 5;
+                    this.ctx.stroke();
+                    this.ctx.shadowBlur = 50;
+                    this.ctx.shadowColor = '#4B0082';
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                    return;
+                }
+
                 this.ctx.beginPath();
                 this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
                 this.ctx.fillStyle = this.config.color;
@@ -812,6 +1078,15 @@
                 if (this.type === 'blackHole') {
                     this.ctx.strokeStyle = '#8A2BE2';
                     this.ctx.lineWidth = 4;
+                    // Draw Aura
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI*2);
+                    this.ctx.strokeStyle = 'rgba(138, 43, 226, 0.3)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+                } else if (this.type === 'loopDamage') {
+                    this.ctx.strokeStyle = '#00FF00';
+                    this.ctx.lineWidth = 3;
                 } else if (this.type === 'holyLight') {
                     this.ctx.strokeStyle = '#FFFF00';
                     this.ctx.lineWidth = 2;
@@ -840,7 +1115,7 @@
                     this.ctx.lineWidth = 2;
                 } else {
                     this.ctx.lineWidth = 2;
-                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.strokeStyle = '#fff'; 
                 }
                 
                 this.ctx.stroke();
@@ -862,11 +1137,19 @@
             balls: [],
             walls: [[], []],
             loopId: null,
+            frame: 0,
+            singularityMode: false,
 
             init() {
                 document.getElementById('startBtn').addEventListener('click', () => this.start());
                 document.getElementById('restartBtn').addEventListener('click', () => this.reset());
                 
+                document.getElementById('themeBtn').addEventListener('click', () => {
+                   const html = document.documentElement;
+                   const current = html.getAttribute('data-theme');
+                   html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+                });
+
                 window.addEventListener('resize', () => {
                     this.balls.forEach(b => b.resize());
                 });
@@ -878,6 +1161,8 @@
                 
                 document.getElementById('p1Walls').innerHTML = '';
                 document.getElementById('p2Walls').innerHTML = '';
+                document.getElementById('gameContainer').classList.remove('singularity-mode');
+                this.singularityMode = false;
                 
                 document.getElementById('gameOverPanel').classList.add('hidden');
                 document.getElementById('menuPanel').classList.remove('hidden');
@@ -886,6 +1171,7 @@
                 const c2 = document.getElementById('c2').getContext('2d');
                 c1.clearRect(0,0,10000,10000);
                 c2.clearRect(0,0,10000,10000);
+                this.frame = 0;
             },
 
             start() {
@@ -919,14 +1205,29 @@
                 document.getElementById('p2Name').style.color = BALL_TYPES[p2Type].color;
 
                 this.active = true;
+                this.frame = 0;
                 this.loop();
+            },
+
+            triggerSingularity(ball) {
+                this.singularityMode = true;
+                document.getElementById('gameContainer').classList.add('singularity-mode');
+                ball.x = window.innerWidth / 2;
+                // Don't set Y here, let Ball constructor handle or let it be centered
+                ball.y = window.innerHeight / 2;
             },
 
             loop() {
                 if (!this.active) return;
+                this.frame++;
 
                 this.balls.forEach(b => b.ctx.clearRect(0,0, b.canvas.width, b.canvas.height));
-                this.walls.forEach(lane => lane.forEach(w => w.update()));
+                
+                // Special handling for singularity: Both lanes update, but visually they are sucked
+                let singularityBall = this.balls.find(b => b.type === 'trueBlackHole');
+
+                // Update walls (Singularity affects ALL walls)
+                this.walls.forEach(lane => lane.forEach(w => w.update(singularityBall)));
                 
                 this.balls.forEach((b, i) => {
                     b.update();
@@ -936,8 +1237,8 @@
                         dmgText = "???";
                     } else if (b.type === 'infinity') {
                         dmgText = "∞";
-                    } else if (b.type === 'absoluteVictory') {
-                        dmgText = "WIN";
+                    } else if (b.type === 'absoluteVictory' || b.type === 'trueBlackHole') {
+                        dmgText = "∞";
                     } else {
                         dmgText = formatBigInt(b.damage);
                     }
@@ -961,7 +1262,7 @@
                 title.innerText = winnerName;
                 title.style.color = winnerBall.config.color;
                 
-                let finalDmg = (winnerBall.type === 'infinity') ? "∞" : formatBigInt(winnerBall.damage);
+                let finalDmg = (winnerBall.type === 'infinity' || winnerBall.type === 'trueBlackHole') ? "∞" : formatBigInt(winnerBall.damage);
                 if (winnerBall.type === 'absoluteVictory') finalDmg = "INSTANT WIN";
 
                 stats.innerHTML = `
