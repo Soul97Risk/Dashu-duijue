@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大数破壁：究极对决</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #050505;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* CRT Scanline Effect */
+        .scanlines {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            position: relative;
+        }
+
+        .lane {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+        }
+
+        .lane-divider {
+            background: linear-gradient(to bottom, transparent, #333, #333, transparent);
+            width: 2px;
+        }
+
+        /* Top Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            pointer-events: none;
+        }
+
+        .ball-name {
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        .ball-damage {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* Walls Area */
+        .walls-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .wall {
+            position: absolute;
+            left: 5%;
+            width: 90%;
+            height: 40px;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .wall-label {
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #444;
+            background: rgba(255,255,255,0.8);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+
+        /* Canvas for Balls */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        /* UI Panels (Menu/Game Over) */
+        .ui-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid #333;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            width: 90%;
+            max-width: 600px;
+            color: #eee;
+            backdrop-filter: blur(5px);
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { letter-spacing: 2px; }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        label { display: block; color: #888; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        select {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 4px;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            appearance: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        select:hover { border-color: #666; }
+        select:focus { border-color: #fff; }
+
+        button {
+            width: 100%;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 1rem;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        button:hover { background: #e0e0e0; }
+        button:active { transform: scale(0.98); }
+
+        .lane-title {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div id="gameContainer" class="game-container">
+        <!-- Player 1 (Left) -->
+        <div class="lane" id="lane1">
+            <div class="info-panel">
+                <div>
+                    <div class="ball-name" id="p1Name">Player 1</div>
+                    <div class="ball-damage" id="p1Dmg">0</div>
+                </div>
+            </div>
+            <div class="walls-layer" id="p1Walls"></div>
+            <canvas id="c1"></canvas>
+        </div>
+
+        <div class="lane-divider"></div>
+
+        <!-- Player 2 (Right) -->
+        <div class="lane" id="lane2">
+            <div class="info-panel" style="justify-content: flex-end; text-align: right;">
+                <div>
+                    <div class="ball-name" id="p2Name">Player 2</div>
+                    <div class="ball-damage" id="p2Dmg">0</div>
+                </div>
+            </div>
+            <div class="walls-layer" id="p2Walls"></div>
+            <canvas id="c2"></canvas>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="menuPanel" class="ui-panel">
+        <h1 class="text-2xl font-bold mb-6 text-white">ULTIMATE DUEL<br><span class="text-xs font-normal text-gray-500">大数破壁</span></h1>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+                <div class="lane-title">LEFT LANE</div>
+                <label>Ball Type</label>
+                <select id="p1Select">
+                    <option value="godGambler">上帝赌徒球 (God Gambler)</option>
+                    <option value="speed">速度球 (Speed Boost)</option>
+                    <option value="infinity">无限球 (Infinity)</option>
+                    <option value="holyLight">圣光球 (Holy Light)</option>
+                    <option value="blackHole">黑洞球 (Black Hole)</option>
+                    <option value="normalGambler">普通赌徒球 (Gambler)</option>
+                    <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
+                    <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
+                    <option value="fibonacci">斐波那契球 (Fibonacci)</option>
+                    <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
+                    <option value="percentage">百分比球 (Percentage)</option>
+                    <option value="thousand">1000球 (Thousand)</option>
+                    <option value="factorial">自我阶乘球 (Factorial)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="lane-title">RIGHT LANE</div>
+                <label>Ball Type</label>
+                <select id="p2Select">
+                    <option value="godGambler">上帝赌徒球 (God Gambler)</option>
+                    <option value="blackHole">黑洞球 (Black Hole)</option>
+                    <option value="infinity">无限球 (Infinity)</option>
+                    <option value="speed">速度球 (Speed Boost)</option>
+                    <option value="holyLight">圣光球 (Holy Light)</option>
+                    <option value="normalGambler">普通赌徒球 (Gambler)</option>
+                    <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
+                    <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
+                    <option value="fibonacci">斐波那契球 (Fibonacci)</option>
+                    <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
+                    <option value="percentage">百分比球 (Percentage)</option>
+                    <option value="thousand">1000球 (Thousand)</option>
+                    <option value="factorial">自我阶乘球 (Factorial)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Difficulty Level</label>
+            <select id="difficultySelect">
+                <option value="simple">简单 (Simple) 10^5~7</option>
+                <option value="medium">中等 (Medium) 10^9~11</option>
+                <option value="hard">困难 (Hard) 10^20~40</option>
+                <option value="hell">地狱 (Hell) 10^40~140</option>
+                <option value="god">神的战场 (God) 10^200~500</option>
+            </select>
+        </div>
+
+        <button id="startBtn">INITIALIZE SYSTEM</button>
+    </div>
+
+    <!-- Game Over -->
+    <div id="gameOverPanel" class="ui-panel hidden">
+        <h1 class="text-3xl mb-2 text-yellow-500 font-bold">WINNER</h1>
+        <h2 id="winnerText" class="text-xl mb-6 text-white"></h2>
+        <div class="text-xs text-gray-400 mb-8 font-mono bg-gray-900 p-4 rounded" id="statsText"></div>
+        <button id="restartBtn">RESTART SYSTEM</button>
+    </div>
+
+    <script>
+        /**
+         * Core Game Logic
+         */
+
+        // --- Utilities ---
+        function formatBigInt(n) {
+            if (n > 10n ** 1000n) return "INFINITY";
+            if (n < 1000000n) return n.toLocaleString();
+            const s = n.toString();
+            if (s.length < 7) return n.toString(); 
+            const exponent = s.length - 1;
+            const mantissa = s.substring(0, Math.min(4, s.length)); 
+            if (mantissa.length > 1) {
+                return `${mantissa[0]}.${mantissa.substring(1)}e${exponent}`;
+            }
+            return `${mantissa[0]}e${exponent}`;
+        }
+
+        const fibCache = new Map();
+        fibCache.set(0n, 0n);
+        fibCache.set(1n, 1n);
+        
+        function getFibonacci(n) {
+            if (n < 0n) return 0n;
+            if (fibCache.has(n)) return fibCache.get(n);
+            let a = 0n, b = 1n, temp;
+            return b; 
+        }
+
+        // --- Configuration ---
+        const DIFFICULTIES = {
+            simple: [5, 6, 7],
+            medium: [9, 10, 11],
+            hard: [20, 30, 40],
+            hell: [40, 60, 80, 100, 120, 140],
+            god: [200, 300, 400, 450, 500, 500, 500]
+        };
+
+        const BALL_TYPES = {
+            speed: { name: "速度球", color: "#00FFFF", baseDamage: 100n, speed: 1.2 },
+            infinity: { name: "无限球", color: "#FFFFFF", baseDamage: 999n, speed: 1.0 },
+            holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 100n, speed: 1.0 },
+            blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 100n, speed: 0.9 },
+            godGambler: { name: "上帝赌徒", color: "#FFD700", baseDamage: 1n, speed: 1.0 },
+            normalGambler: { name: "普通赌徒", color: "#FFA500", baseDamage: 1n, speed: 1.0 },
+            madGambler: { name: "疯狂赌徒", color: "#FF4500", baseDamage: 1n, speed: 1.0 },
+            goldenRatio: { name: "黄金分割", color: "#DAA520", baseDamage: 0n, speed: 1.0 },
+            fibonacci: { name: "斐波那契", color: "#00CED1", baseDamage: 1n, speed: 1.0 },
+            selfRefFibonacci: { name: "自指斐波", color: "#20B2AA", baseDamage: 1n, speed: 1.0 },
+            percentage: { name: "百分比球", color: "#FF69B4", baseDamage: 0n, speed: 1.0 },
+            thousand: { name: "1000球", color: "#C0C0C0", baseDamage: 1000n, speed: 1.0 },
+            factorial: { name: "自我阶乘", color: "#DC143C", baseDamage: 10n, speed: 1.0 }
+        };
+
+        // --- Classes ---
+
+        class Wall {
+            constructor(exponent, index, laneId) {
+                this.exponent = exponent;
+                this.maxHp = 10n ** BigInt(exponent);
+                this.currentHp = this.maxHp;
+                this.laneId = laneId;
+                this.index = index;
+                this.isBroken = false;
+                
+                this.el = document.createElement('div');
+                this.el.className = 'wall';
+                this.y = 150 + (index * 100); 
+                this.el.style.top = this.y + 'px';
+                
+                this.label = document.createElement('div');
+                this.label.className = 'wall-label';
+                this.label.innerText = `10^${exponent}`;
+                this.el.appendChild(this.label);
+                
+                this.text = document.createElement('span');
+                this.text.innerText = formatBigInt(this.currentHp);
+                this.el.appendChild(this.text);
+
+                document.getElementById(laneId === 0 ? 'p1Walls' : 'p2Walls').appendChild(this.el);
+                this.shakeTimer = 0;
+            }
+
+            update() {
+                if (this.isBroken) return;
+
+                let renderY = this.y;
+                if (this.shakeTimer > 0) {
+                    renderY += (Math.random() - 0.5) * 10;
+                    this.el.style.backgroundColor = '#ffcccc';
+                    this.shakeTimer--;
+                } else {
+                    this.el.style.backgroundColor = '#fff';
+                }
+                this.el.style.transform = `translateY(${renderY - this.y}px)`;
+            }
+
+            takeDamage(amount) {
+                if (this.isBroken) return;
+                this.currentHp -= amount;
+                this.shakeTimer = 5;
+
+                if (this.currentHp <= 0n) {
+                    this.currentHp = 0n;
+                    this.isBroken = true;
+                    this.el.style.opacity = '0';
+                    setTimeout(() => this.el.remove(), 500);
+                }
+                this.text.innerText = formatBigInt(this.currentHp);
+            }
+        }
+
+        class Ball {
+            constructor(type, laneIndex, walls, canvasId) {
+                this.type = type;
+                this.config = BALL_TYPES[type];
+                this.laneIndex = laneIndex;
+                this.walls = walls;
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.damage = this.config.baseDamage;
+                this.hits = 0;
+                this.finished = false;
+
+                this.radius = 10;
+                this.x = this.canvas.width / 2;
+                this.y = 50;
+                // Speed management
+                this.baseSpeed = 8 * this.config.speed; 
+                this.currentSpeedMult = 1.0; // Multiplier for Speed Ball
+                
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = this.baseSpeed;
+
+                this.fibPrev = 1n;
+                this.fibCurr = 1n;
+            }
+
+            resize() {
+                this.canvas.width = this.canvas.parentElement.clientWidth;
+                this.canvas.height = this.canvas.parentElement.clientHeight;
+            }
+
+            update() {
+                if (this.finished) return;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx *= -1;
+                } else if (this.x + this.radius > this.canvas.width) {
+                    this.x = this.canvas.width - this.radius;
+                    this.vx *= -1;
+                }
+
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy *= -1;
+                }
+
+                if (this.y > this.canvas.height + 50) {
+                    this.finished = true;
+                    game.endGame(this);
+                }
+
+                for (let w of this.walls) {
+                    if (!w.isBroken) {
+                        let wallX = (parseFloat(w.el.style.left) / 100) * this.canvas.width;
+                        let wallW = (parseFloat(w.el.style.width) / 100) * this.canvas.width;
+                        let wallY = w.y;
+                        let wallH = 40;
+
+                        let testX = this.x;
+                        let testY = this.y;
+
+                        if (this.x < wallX) testX = wallX;
+                        else if (this.x > wallX + wallW) testX = wallX + wallW;
+                        
+                        if (this.y < wallY) testY = wallY;
+                        else if (this.y > wallY + wallH) testY = wallY + wallH;
+
+                        let distX = this.x - testX;
+                        let distY = this.y - testY;
+                        let dist = Math.sqrt(distX*distX + distY*distY);
+
+                        if (dist <= this.radius) {
+                            this.resolveCollision(w, distX, distY);
+                        }
+                    }
+                }
+            }
+
+            resolveCollision(wall, dx, dy) {
+                // 1. Calc Damage
+                let dmg = this.calculateDamage(wall);
+                wall.takeDamage(dmg);
+                this.hits++;
+
+                // 2. Bounce
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                let nx = dx / (dist || 1);
+                let ny = dy / (dist || 1);
+
+                let dot = this.vx * nx + this.vy * ny;
+                this.vx = this.vx - 2 * dot * nx;
+                this.vy = this.vy - 2 * dot * ny;
+
+                this.x += nx * 2;
+                this.y += ny * 2;
+
+                this.vx += (Math.random() - 0.5) * 2;
+                
+                // 3. Speed Logic
+                if (this.type === 'speed') {
+                    // Speed up!
+                    this.currentSpeedMult *= 1.05; // +5% per hit
+                    if(this.currentSpeedMult > 3.0) this.currentSpeedMult = 3.0; // Cap at 3x
+                }
+
+                let currentSpeed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+                let targetBase = this.baseSpeed * this.currentSpeedMult;
+                
+                let minSpeed = targetBase * 0.8;
+                let maxSpeed = targetBase * 1.5;
+                
+                if (currentSpeed < minSpeed) {
+                    this.vx *= 1.2;
+                    this.vy *= 1.2;
+                } else if (currentSpeed > maxSpeed) {
+                    this.vx *= 0.8;
+                    this.vy *= 0.8;
+                }
+            }
+
+            calculateDamage(wall) {
+                let d = 0n;
+                switch (this.type) {
+                    case 'infinity':
+                        // Instantly breaks wall
+                        d = wall.currentHp + 1n; 
+                        break;
+
+                    case 'holyLight':
+                        // 50% of Max HP fixed damage (Always breaks in 2 hits)
+                        d = wall.maxHp / 2n;
+                        if (d < 1n) d = 1n;
+                        // Bonus if HP is very low, execute it
+                        if (wall.currentHp < wall.maxHp / 10n) d = wall.currentHp + 1n;
+                        break;
+
+                    case 'blackHole':
+                        // Starts small, grows exponentially (x10 per hit)
+                        // Base damage is 100
+                        d = this.damage;
+                        this.damage = this.damage * 10n;
+                        break;
+
+                    case 'speed':
+                        d = this.damage;
+                        // Slight damage increase, but main power is speed
+                        this.damage += 50n;
+                        break;
+
+                    case 'godGambler':
+                        // NEW LOGIC:
+                        // 1. Guaranteed 10% of current HP
+                        let min = wall.currentHp / 10n;
+                        if (min < 1n) min = 1n;
+                        
+                        // 2. Random extra damage with practically infinite limit (10^0 to 10^1000)
+                        // This covers far beyond the max wall HP of 10^500
+                        let randExp = Math.floor(Math.random() * 1001); 
+                        let extra = 10n ** BigInt(randExp);
+                        
+                        d = min + extra;
+                        break;
+
+                    case 'normalGambler':
+                        d = BigInt(Math.floor(Math.random() * 10000000) + 1); 
+                        break;
+                    
+                    case 'madGambler':
+                        d = BigInt(Math.floor(Math.random() * 1000000000) + 1); 
+                        break;
+
+                    case 'goldenRatio':
+                        d = (wall.currentHp * 382n) / 1000n;
+                        if (d < 1n) d = 1n;
+                        break;
+
+                    case 'fibonacci':
+                        let next = this.fibPrev + this.fibCurr;
+                        this.fibPrev = this.fibCurr;
+                        this.fibCurr = next;
+                        d = this.fibCurr;
+                        break;
+                    
+                    case 'selfRefFibonacci':
+                        let nextSelf = this.fibPrev + this.fibCurr;
+                        this.fibPrev = this.fibCurr;
+                        this.fibCurr = nextSelf;
+                        this.fibPrev += this.fibCurr; 
+                        d = this.fibCurr;
+                        break;
+
+                    case 'percentage':
+                        d = (wall.currentHp * 41n) / 1000n;
+                        if (d < 1n) d = 1n;
+                        break;
+
+                    case 'thousand':
+                        d = 1000n;
+                        break;
+
+                    case 'factorial':
+                        d = this.damage;
+                        this.damage = (this.damage * 15n) / 10n;
+                        break;
+
+                    default:
+                        d = this.damage;
+                        this.damage += 100n; 
+                        break;
+                }
+                
+                // Update displayed damage state for balls that have "state" damage
+                if(!['godGambler','goldenRatio','percentage','infinity','holyLight'].includes(this.type)) {
+                     // Keep damage updated
+                }
+                // Special display handling for Infinity
+                if (this.type === 'infinity') this.damage = 9999999999n; // Just for display
+                
+                return d;
+            }
+
+            draw() {
+                this.ctx.beginPath();
+                this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+                this.ctx.fillStyle = this.config.color;
+                this.ctx.fill();
+                
+                // Visual flair based on type
+                if (this.type === 'blackHole') {
+                    this.ctx.strokeStyle = '#8A2BE2';
+                    this.ctx.lineWidth = 4;
+                } else if (this.type === 'holyLight') {
+                    this.ctx.strokeStyle = '#FFFF00';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = "white";
+                } else if (this.type === 'infinity') {
+                    this.ctx.strokeStyle = '#000';
+                    this.ctx.lineWidth = 2;
+                } else {
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                this.ctx.stroke();
+                this.ctx.shadowBlur = 0; // Reset
+
+                // Inner detail
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.x - this.radius, this.y);
+                this.ctx.lineTo(this.x + this.radius, this.y);
+                this.ctx.strokeStyle = (this.type === 'infinity') ? '#000' : '#000';
+                this.ctx.stroke();
+            }
+        }
+
+        // --- Game Controller ---
+
+        const game = {
+            active: false,
+            balls: [],
+            walls: [[], []],
+            loopId: null,
+
+            init() {
+                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('restartBtn').addEventListener('click', () => this.reset());
+                
+                window.addEventListener('resize', () => {
+                    this.balls.forEach(b => b.resize());
+                });
+            },
+
+            reset() {
+                this.active = false;
+                cancelAnimationFrame(this.loopId);
+                
+                document.getElementById('p1Walls').innerHTML = '';
+                document.getElementById('p2Walls').innerHTML = '';
+                
+                document.getElementById('gameOverPanel').classList.add('hidden');
+                document.getElementById('menuPanel').classList.remove('hidden');
+                
+                const c1 = document.getElementById('c1').getContext('2d');
+                const c2 = document.getElementById('c2').getContext('2d');
+                c1.clearRect(0,0,10000,10000);
+                c2.clearRect(0,0,10000,10000);
+            },
+
+            start() {
+                document.getElementById('menuPanel').classList.add('hidden');
+                
+                const p1Type = document.getElementById('p1Select').value;
+                const p2Type = document.getElementById('p2Select').value;
+                const diffMode = document.getElementById('difficultySelect').value;
+                const exponents = DIFFICULTIES[diffMode];
+
+                this.walls = [[], []];
+                this.balls = [];
+
+                // Create Walls
+                exponents.forEach((exp, i) => {
+                    this.walls[0].push(new Wall(exp, i, 0));
+                    this.walls[1].push(new Wall(exp, i, 1));
+                });
+
+                // Create Balls
+                this.balls.push(new Ball(p1Type, 0, this.walls[0], 'c1'));
+                this.balls.push(new Ball(p2Type, 1, this.walls[1], 'c2'));
+
+                this.balls.forEach(b => b.resize());
+                
+                // Update UI Names
+                document.getElementById('p1Name').innerText = BALL_TYPES[p1Type].name;
+                document.getElementById('p1Name').style.color = BALL_TYPES[p1Type].color;
+                
+                document.getElementById('p2Name').innerText = BALL_TYPES[p2Type].name;
+                document.getElementById('p2Name').style.color = BALL_TYPES[p2Type].color;
+
+                this.active = true;
+                this.loop();
+            },
+
+            loop() {
+                if (!this.active) return;
+
+                this.balls.forEach(b => b.ctx.clearRect(0,0, b.canvas.width, b.canvas.height));
+                this.walls.forEach(lane => lane.forEach(w => w.update()));
+                
+                this.balls.forEach((b, i) => {
+                    b.update();
+                    b.draw();
+                    let dmgText = "";
+                    if (['godGambler','goldenRatio','percentage','holyLight'].includes(b.type)) {
+                        dmgText = "???";
+                    } else if (b.type === 'infinity') {
+                        dmgText = "∞";
+                    } else {
+                        dmgText = formatBigInt(b.damage);
+                    }
+                    document.getElementById(i===0 ? 'p1Dmg' : 'p2Dmg').innerText = `DMG: ${dmgText}`;
+                });
+
+                this.loopId = requestAnimationFrame(() => this.loop());
+            },
+
+            endGame(winnerBall) {
+                this.active = false;
+                cancelAnimationFrame(this.loopId);
+                
+                const panel = document.getElementById('gameOverPanel');
+                const title = document.getElementById('winnerText');
+                const stats = document.getElementById('statsText');
+                
+                panel.classList.remove('hidden');
+                
+                const winnerName = winnerBall.laneIndex === 0 ? "LEFT PLAYER" : "RIGHT PLAYER";
+                title.innerText = winnerName;
+                title.style.color = winnerBall.config.color;
+                
+                let finalDmg = (winnerBall.type === 'infinity') ? "∞" : formatBigInt(winnerBall.damage);
+                
+                stats.innerHTML = `
+                    BALL: ${winnerBall.config.name}<br>
+                    HITS: ${winnerBall.hits}<br>
+                    FINAL DMG: ${finalDmg}
+                `;
+            }
+        };
+
+        game.init();
+
+    </script>
+</body>
+</html>
