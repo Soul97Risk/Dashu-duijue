@@ -20,6 +20,8 @@
             --wall-gravitized: #2a0a3d;
             --wall-gravitized-text: #fff;
             --wall-hit: #ffcccc;
+            --wall-holy: #fffacd;
+            --wall-venom: #ccffcc;
             --panel-bg: rgba(10, 10, 10, 0.95);
             --panel-border: #333;
             --input-bg: #1a1a1a;
@@ -41,6 +43,8 @@
             --wall-gravitized: #e0d0f0;
             --wall-gravitized-text: #000;
             --wall-hit: #ff9999;
+            --wall-holy: #ffffcc;
+            --wall-venom: #004400;
             --panel-bg: rgba(255, 255, 255, 0.95);
             --panel-border: #ccc;
             --input-bg: #fff;
@@ -142,7 +146,6 @@
             transition: all 1s ease;
         }
         
-        /* True Black Hole Mode: Remove Divider */
         .game-container.singularity-mode {
              grid-template-columns: 1fr;
         }
@@ -152,6 +155,7 @@
         .game-container.singularity-mode .lane {
             border: none;
             background: transparent;
+            overflow: visible;
         }
 
         .lane {
@@ -166,6 +170,7 @@
         .lane-divider {
             background: linear-gradient(to bottom, transparent, var(--divider-color), var(--divider-color), transparent);
             width: 2px;
+            transition: opacity 1s;
         }
 
         .ball-name {
@@ -204,9 +209,10 @@
             font-weight: bold;
             font-size: 12px;
             box-shadow: 0 0 10px var(--wall-shadow);
-            transition: transform 0.1s, width 0.2s, height 0.2s, top 0.2s, left 0.2s;
+            transition: transform 0.1s, width 0.2s, height 0.2s, top 0.2s, left 0.2s, border-color 0.2s;
             border-radius: 4px;
-            z-index: 2; /* Behind ball */
+            z-index: 2; 
+            border: 2px solid transparent; /* Initial border for transition */
         }
         
         .wall.is-hit {
@@ -220,6 +226,20 @@
             color: var(--wall-gravitized-text);
         }
 
+        .wall.light-infused {
+            border: 2px solid #FFFF00;
+            box-shadow: 0 0 15px #FFFF00;
+            background-color: var(--wall-holy);
+            color: #000;
+        }
+        
+        .wall.venomized {
+            border: 2px solid #00FF00;
+            box-shadow: 0 0 15px #00FF00 inset;
+            background-color: var(--wall-venom);
+            color: #000;
+        }
+
         .wall.singularized {
             border: 2px solid #000;
             background-color: #000;
@@ -228,11 +248,9 @@
             transform: scale(0.95);
         }
 
-        /* True Black Hole Sucking Effect */
         .wall.being-sucked {
-            transition: all 0.1s linear;
-            transform: scale(0.1) rotate(720deg);
-            opacity: 0.5;
+            transition: transform 0.2s ease-in, opacity 0.2s;
+            opacity: 0.7;
         }
 
         .wall-label {
@@ -257,8 +275,19 @@
             height: 100%;
             z-index: 5;
         }
+        
+        #trueBlackHoleVisual {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
 
-        /* UI Panels (Menu/Game Over) */
+        /* UI Panels */
         .ui-panel {
             position: absolute;
             top: 50%;
@@ -281,7 +310,6 @@
 
         h1 { letter-spacing: 2px; }
 
-        /* Form Elements */
         .form-group { margin-bottom: 1.5rem; text-align: left; }
         label { display: block; color: var(--text-dim); font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
         
@@ -341,7 +369,7 @@
 <body>
     <div class="scanlines"></div>
 
-    <!-- New Header Layout -->
+    <!-- Header -->
     <div class="game-header">
         <div class="player-stats p1-stats">
             <div class="ball-name" id="p1Name">Player 1</div>
@@ -357,24 +385,21 @@
     </div>
     
     <button class="theme-toggle" id="themeBtn" title="Switch Theme">🌓</button>
+    <canvas id="trueBlackHoleVisual"></canvas>
 
     <div id="gameContainer" class="game-container">
-        <!-- Player 1 (Left) -->
         <div class="lane" id="lane1">
             <div class="walls-layer" id="p1Walls"></div>
             <canvas id="c1"></canvas>
         </div>
-
         <div class="lane-divider"></div>
-
-        <!-- Player 2 (Right) -->
         <div class="lane" id="lane2">
             <div class="walls-layer" id="p2Walls"></div>
             <canvas id="c2"></canvas>
         </div>
     </div>
 
-    <!-- Start Menu -->
+    <!-- Menu -->
     <div id="menuPanel" class="ui-panel">
         <h1 class="text-2xl font-bold mb-6">ULTIMATE DUEL<br><span class="text-xs font-normal opacity-70">大数破壁：究极对决</span></h1>
         
@@ -385,8 +410,10 @@
                 <select id="p1Select">
                     <optgroup label=">>> 圣光类型 (Holy Light)">
                         <option value="holyLight">圣光球 (Holy Light)</option>
+                        <option value="holyLight2">二级圣光球 (Holy Light Lv.2)</option>
                     </optgroup>
                     <optgroup label=">>> 速度类型 (Speed)">
+                        <option value="x2Split">X2分裂球 (X2 Split)</option>
                         <option value="speed">速度球 (Speed Boost)</option>
                         <option value="x2Speed">X2速度球 (X2 Speed)</option>
                         <option value="factorialSpeed">阶乘速度球 (Factorial Speed)</option>
@@ -405,6 +432,8 @@
                         <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
                     </optgroup>
                     <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="sticky">粘连球 (Sticky Ball)</option>
+                        <option value="venomPierce">毒液穿透球 (Venom Pierce)</option>
                         <option value="trueBlackHole">真：黑洞球 (True: Black Hole)</option>
                         <option value="blackHole">黑洞球 (Black Hole)</option>
                         <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
@@ -421,8 +450,10 @@
                 <select id="p2Select">
                     <optgroup label=">>> 圣光类型 (Holy Light)">
                         <option value="holyLight">圣光球 (Holy Light)</option>
+                        <option value="holyLight2">二级圣光球 (Holy Light Lv.2)</option>
                     </optgroup>
                     <optgroup label=">>> 速度类型 (Speed)">
+                        <option value="x2Split">X2分裂球 (X2 Split)</option>
                         <option value="speed">速度球 (Speed Boost)</option>
                         <option value="x2Speed">X2速度球 (X2 Speed)</option>
                         <option value="factorialSpeed">阶乘速度球 (Factorial Speed)</option>
@@ -441,6 +472,8 @@
                         <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
                     </optgroup>
                     <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="sticky">粘连球 (Sticky Ball)</option>
+                        <option value="venomPierce">毒液穿透球 (Venom Pierce)</option>
                         <option value="trueBlackHole">真：黑洞球 (True: Black Hole)</option>
                         <option value="blackHole">黑洞球 (Black Hole)</option>
                         <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
@@ -461,7 +494,7 @@
                 <option value="medium">中等 (Medium) 10^9~11</option>
                 <option value="hard">困难 (Hard) 10^20~40</option>
                 <option value="hell">地狱 (Hell) 10^40~140</option>
-                <option value="god">神的战场 (God) 10^200~500</option>
+                <option value="god">神的战场 (God) 10^200~6400</option>
             </select>
         </div>
 
@@ -480,10 +513,12 @@
         /**
          * Core Game Logic
          */
+        
+        const BIG_LIMIT = 10n ** 1000n; 
+        const EXP_CAP = 12000; 
 
-        // --- Utilities ---
         function formatBigInt(n) {
-            if (n > 10n ** 1000n) return "INFINITY";
+            if (n > BIG_LIMIT) return "INFINITY";
             if (n < 1000000n) return n.toLocaleString();
             const s = n.toString();
             if (s.length < 7) return n.toString(); 
@@ -513,13 +548,18 @@
             medium: [9, 10, 11],
             hard: [20, 30, 40],
             hell: [40, 60, 80, 100, 120, 140],
-            god: [200, 300, 400, 450, 500, 500, 500]
+            god: [200, 300, 400, 800, 1600, 3200, 6400] 
         };
 
         const BALL_TYPES = {
-            // New / Modified Balls
-            trueBlackHole: { name: "真：黑洞球", color: "#000000", baseDamage: 10n**100n, speed: 0.0 }, // Static but infinite range
-            blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 1000n, speed: 0.9 }, // Buffed base
+            x2Split: { name: "X2分裂球", color: "#00FF00", baseDamage: 50n, speed: 1.5 }, 
+            venomPierce: { name: "毒液穿透球", color: "#32CD32", baseDamage: 1000n, speed: 1.2 }, 
+            sticky: { name: "粘连球", color: "#FFA500", baseDamage: 100n, speed: 1.2 }, 
+            
+            trueBlackHole: { name: "真：黑洞球", color: "#000000", baseDamage: 10n**100n, speed: 0.0 },
+            blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 1000n, speed: 0.9 },
+            holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 1000n, speed: 0.9 },
+            holyLight2: { name: "二级圣光球", color: "#FFD700", baseDamage: 2000n, speed: 0.9 }, 
             
             x2Speed: { name: "X2速度球", color: "#0000FF", baseDamage: 10n, speed: 2.0 }, 
             factorialSpeed: { name: "阶乘速度球", color: "#FF4500", baseDamage: 1n, speed: 1.8 },
@@ -528,10 +568,8 @@
             absoluteVictory: { name: "绝对胜利球", color: "#FFFFFF", baseDamage: 0n, speed: 0.5 },
             loopDamage: { name: "循环伤害球", color: "#32CD32", baseDamage: 100n, speed: 1.0 },
 
-            // Existing
             speed: { name: "速度球", color: "#00FFFF", baseDamage: 100n, speed: 1.3 },
             infinity: { name: "无限球", color: "#FFFFFF", baseDamage: 999n, speed: 1.0 },
-            holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 500n, speed: 0.9 },
             godGambler: { name: "上帝赌徒", color: "#FFD700", baseDamage: 1n, speed: 1.0 },
             normalGambler: { name: "普通赌徒", color: "#FFA500", baseDamage: 1n, speed: 1.0 },
             madGambler: { name: "疯狂赌徒", color: "#FF4500", baseDamage: 1n, speed: 1.0 },
@@ -542,8 +580,6 @@
             thousand: { name: "1000球", color: "#C0C0C0", baseDamage: 1000n, speed: 1.0 },
             factorial: { name: "自我阶乘", color: "#DC143C", baseDamage: 10n, speed: 1.0 }
         };
-
-        // --- Classes ---
 
         class Wall {
             constructor(exponent, index, laneId) {
@@ -572,8 +608,15 @@
                 this.shakeTimer = 0;
                 
                 this.gravitySources = [];
+                this.lightParticles = 0;
+                this.venomStacks = 0;
                 this.age = 0;
-                this.isSucked = false; // True Black Hole effect
+                this.isSucked = false;
+                this.lastHp = this.currentHp;
+                
+                // Gambler effect
+                this.gamblerTimer = 0;
+                this.gamblerColor = '';
             }
 
             addGravityPoint(sourceBall) {
@@ -581,73 +624,84 @@
                 this.el.classList.add('gravitized');
             }
 
-            // Override update for singularity logic
+            addLightParticle() {
+                this.lightParticles++;
+                this.el.classList.add('light-infused');
+            }
+
+            addVenom() {
+                this.venomStacks++;
+                this.el.classList.add('venomized');
+            }
+            
+            setGamblerEffect(color) {
+                this.gamblerColor = color;
+                this.gamblerTimer = 30; // 0.5s visual effect
+            }
+
             update(singularityBall = null) {
                 if (this.isBroken) return;
                 
-                // If being sucked by True Black Hole
-                if (singularityBall) {
+                if (singularityBall && singularityBall.isSingularityActive) {
                     this.isSucked = true;
                     this.el.classList.add('being-sucked');
-                    
-                    // Get Ball visual center (in global coords, lane agnostic since divider gone)
-                    // Ball is in center of screen in singularity mode
-                    // Let's just pull everything to center
-                    const centerX = window.innerWidth / 2;
-                    const centerY = window.innerHeight / 2; // Or ball Y
-                    
                     const rect = this.el.getBoundingClientRect();
                     const myX = rect.left + rect.width/2;
                     const myY = rect.top + rect.height/2;
-                    
-                    // Move towards center
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
                     const dx = centerX - myX;
                     const dy = centerY - myY;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if (dist < 50) {
-                        // EATEN
-                        this.takeDamage(this.maxHp * 1000n, true); // Instant kill
-                        singularityBall.onWallDestroyed(this.maxHp); // Trigger win logic maybe?
-                    } else {
-                        // Move element visually
-                        // Since we are manipulating DOM style top/left which are relative to container...
-                        // This is tricky with lane relative positioning.
-                        // Quick hack: Use transform translate
-                        const speed = 5;
-                        this.el.style.transform = `translate(${dx * 0.05}px, ${dy * 0.05}px) scale(0.8)`;
-                        // Note: This is visual only, but since physics collision for true black hole 
-                        // is global radius check, it's fine.
+                    this.el.style.transform = `translate(${dx * 0.1}px, ${dy * 0.1}px) scale(0.5)`;
+                    if (this.age % 12 === 0) {
+                        let dmg = this.maxHp / 5n; 
+                        if (dmg < 1n) dmg = 1n;
+                        const broken = this.takeDamage(dmg, true);
+                        if (broken) singularityBall.checkWinCondition();
                     }
+                    this.age++;
                     return;
                 }
 
                 this.age++;
 
-                // Handle Standard Black Hole Gravity Points
-                if (this.gravitySources.length > 0) {
+                // Black Hole
+                if (this.age % 6 === 0 && this.gravitySources.length > 0) {
+                    const loss = this.lastHp - this.currentHp;
+                    if (loss > 0n) this.gravitySources[0].ball.damage += loss / 10n; 
+                    this.lastHp = this.currentHp;
+                }
+                if (this.age % 12 === 0 && this.gravitySources.length > 0) {
                     let count = BigInt(this.gravitySources.length);
                     let totalDmg = 0n;
-
                     if (this.currentHp > 0n) {
-                        // 2% per sec
-                        let percDmg = (this.currentHp * count * 2n) / 6000n; 
+                        let percDmg = (this.currentHp * 25n * count) / 1000n; 
                         if (percDmg < 1n) percDmg = 1n;
                         totalDmg += percDmg;
                     }
-                    
-                    // 0.2s tick = 12 frames. Apply Ball Damage.
-                    if (this.age % 12 === 0) {
-                        for (let source of this.gravitySources) {
-                            totalDmg += source.ball.damage;
-                        }
-                    }
-
                     if (totalDmg > 0n) {
                         const broken = this.takeDamage(totalDmg, true);
-                        if (broken && this.gravitySources[0]) {
-                            this.gravitySources[0].ball.onWallDestroyed(this.maxHp);
-                        }
+                        if (broken && this.gravitySources[0]) this.gravitySources[0].ball.onWallDestroyed(this.maxHp);
+                    }
+                }
+
+                // Holy Light Particles
+                if (this.lightParticles > 0) {
+                    if (this.currentHp > 0n) {
+                        let particleDmg = (this.currentHp * 25n) / 60000n; 
+                        if (particleDmg < 1n) particleDmg = 1n;
+                        particleDmg = particleDmg * BigInt(this.lightParticles);
+                        this.takeDamage(particleDmg, true);
+                    }
+                }
+
+                // Venom
+                if (this.venomStacks > 0) {
+                    if (this.currentHp > 0n) {
+                        let venomDmg = (this.maxHp * 25n) / 600000n;
+                        if (venomDmg < 1n) venomDmg = 1n;
+                        venomDmg = venomDmg * BigInt(this.venomStacks);
+                        this.takeDamage(venomDmg, true);
                     }
                 }
 
@@ -658,6 +712,17 @@
                     this.shakeTimer--;
                 } else {
                     this.el.classList.remove('is-hit');
+                }
+                
+                // Apply Gambler Visuals via Inline Styles to override classes
+                if (this.gamblerTimer > 0) {
+                    this.gamblerTimer--;
+                    this.el.style.border = `2px solid ${this.gamblerColor}`;
+                    this.el.style.boxShadow = `0 0 20px ${this.gamblerColor}`;
+                } else {
+                    // Clear inline styles so classes can take over again if needed
+                    this.el.style.border = '';
+                    this.el.style.boxShadow = '';
                 }
                 
                 if(!this.isSucked) this.el.style.transform = `translateY(${renderY - this.y}px)`;
@@ -703,140 +768,138 @@
                 this.vx = (Math.random() - 0.5) * 4;
                 this.vy = this.baseSpeed;
 
-                // True Black Hole Setup
+                this.tbhTimer = 0;
+                this.isSingularityActive = false;
+                
                 if (this.type === 'trueBlackHole') {
-                    this.vx = 0;
-                    this.vy = 0;
-                    this.y = window.innerHeight / 3; // Sit high up
+                    this.vx = 0; this.vy = 0;
+                    this.y = window.innerHeight / 3; 
                     game.triggerSingularity(this);
                 }
 
-                this.fibPrev = 1n;
-                this.fibCurr = 1n;
+                this.fibPrev = 1n; this.fibCurr = 1n;
 
-                this.holyPassiveTimer = 0; 
-                this.holyPassiveActive = false;
-                this.holyPassiveDuration = 0; 
-                this.holyCharge = 0;
-                this.holyUltActive = false;
-                this.holyUltDuration = 0; 
+                // Sticky
+                this.isSticking = false;
+                this.stickTimer = 0;
+                this.stickTarget = null;
+                this.stickDurationBase = 120; 
+                this.stickCount = 0;
             }
 
             resize() {
                 this.canvas.width = this.canvas.parentElement.clientWidth;
                 this.canvas.height = this.canvas.parentElement.clientHeight;
-                if (this.type === 'trueBlackHole') {
-                     this.x = this.canvas.width / 2; // Re-center
-                }
+                if (this.type === 'trueBlackHole') this.x = this.canvas.width / 2;
+            }
+
+            clone() {
+                const b = new Ball(this.type, this.laneIndex, this.walls, this.canvas.id);
+                b.damage = this.damage;
+                b.x = this.x;
+                b.y = this.y;
+                b.vx = -this.vx + (Math.random() - 0.5) * 2;
+                b.vy = -this.vy + (Math.random() - 0.5) * 2;
+                b.hits = this.hits;
+                return b;
             }
 
             onWallDestroyed(wallMaxHp) {
                 if (this.type === 'blackHole') {
                     let multBuff = (this.damage * 2n) / 100n; 
-                    this.damage += multBuff + wallMaxHp;
+                    this.damage += multBuff + (wallMaxHp / 2n);
                 }
-                if (this.type === 'trueBlackHole') {
-                    // True Black Hole wins immediately on consuming anything (per prompt "eats wall direct victory")
-                    game.endGame(this);
+                if (this.type === 'holyLight' || this.type === 'holyLight2') {
+                    let factor = (this.type === 'holyLight2') ? 20n : 10n;
+                    let inherit = wallMaxHp * factor / 100n;
+                    this.damage += inherit;
                 }
+                if (this.isSticking) {
+                    this.isSticking = false;
+                    this.vx = (Math.random() - 0.5) * 4;
+                    this.vy = this.baseSpeed;
+                }
+            }
+
+            checkWinCondition() {
+                const allBroken = game.walls.flat().every(w => w.isBroken);
+                if (allBroken) game.endGame(this);
             }
 
             update() {
                 if (this.finished) return;
 
-                // True Black Hole Logic
                 if (this.type === 'trueBlackHole') {
-                    // It doesn't move physically, it just sits there and sucks
-                    // Logic handled in Wall.update via game loop passing this ball
+                    if (this.tbhTimer < 60) {
+                        this.tbhTimer++;
+                        let targetY = window.innerHeight / 2;
+                        this.y += (targetY - this.y) * 0.05;
+                    } else {
+                        this.isSingularityActive = true;
+                    }
                     return;
                 }
 
-                // Loop Damage Logic
-                if (this.type === 'loopDamage') {
-                    this.damage += 100n; 
+                if (this.type === 'loopDamage') this.damage += 100n; 
+                if (this.type === 'absoluteVictory') { game.endGame(this); return; }
+
+                if (this.type === 'sticky' && this.isSticking) {
+                    if (this.stickTarget && this.stickTarget.isBroken) {
+                        this.isSticking = false; 
+                    } else {
+                        this.stickTimer--;
+                        if (this.stickTimer <= 0) {
+                            this.isSticking = false; 
+                            this.vx = (Math.random() - 0.5) * 8; 
+                            this.vy = -this.baseSpeed;
+                        } else {
+                             if (this.stickTarget && this.stickTarget.currentHp > 0n) {
+                                 let cutDmg = 100n + (this.stickTarget.currentHp * 125n) / 100000n; 
+                                 const broken = this.stickTarget.takeDamage(cutDmg, true);
+                                 if (broken) {
+                                     this.isSticking = false;
+                                     this.onWallDestroyed(this.stickTarget.maxHp);
+                                 }
+                             }
+                             return; 
+                        }
+                    }
                 }
 
-                // Absolute Victory Check
-                if (this.type === 'absoluteVictory') {
-                    game.endGame(this);
-                    return;
-                }
-
-                // Black Hole Aura Logic
-                if (this.type === 'blackHole') {
-                    // 0.01s damage (~every frame)
-                    // Check aura collision with walls
-                    for (let w of this.walls) {
-                        if (!w.isBroken) {
-                            let wx = parseFloat(w.el.style.left) / 100 * this.canvas.width;
-                            let wy = w.y;
-                            // Simple dist check to wall center
-                            let dist = Math.sqrt((this.x - (wx+w.el.clientWidth/2))**2 + (this.y - (wy+30))**2);
-                            if (dist < this.radius * 4) { // Aura radius
-                                w.takeDamage(this.damage, true); // True Damage tick
+                // Holy Light Aura Logic (Focused)
+                if (this.type === 'holyLight' || this.type === 'holyLight2') {
+                    if (game.frame % 6 === 0) {
+                        const target = this.walls.find(w => !w.isBroken);
+                        if (target) {
+                            let base = (this.type === 'holyLight2') ? 2000n : 1000n;
+                            let perc = (this.type === 'holyLight2') ? 10n : 5n;
+                            let auraDmg = base + (target.currentHp * perc / 100n);
+                            const broken = target.takeDamage(auraDmg, true);
+                            if (broken) this.onWallDestroyed(target.maxHp);
+                            else {
+                                target.addLightParticle();
+                                if(this.type === 'holyLight2') target.addLightParticle(); 
                             }
                         }
                     }
                 }
 
-                // Holy Light Passive
-                if (this.type === 'holyLight') {
-                    this.holyPassiveTimer++;
-                    if (this.holyPassiveTimer >= 180) {
-                        this.holyPassiveActive = true;
-                        this.holyPassiveDuration = 60; 
-                        this.holyPassiveTimer = 0;
-                    }
-
-                    if (this.holyPassiveActive) {
-                        this.holyPassiveDuration--;
-                        if (this.holyPassiveDuration % 6 === 0) {
-                            this.applyHolyAuraDamage(1000n, 100); 
-                        }
-                        if (this.holyPassiveDuration <= 0) {
-                            this.holyPassiveActive = false;
-                        }
-                    }
-
-                    if (this.holyUltActive) {
-                        this.holyUltDuration--;
-                        let dmgPerFrame = 10000n / 60n; 
-                        if (dmgPerFrame < 1n) dmgPerFrame = 1n;
-                        this.applyHolyAuraDamage(dmgPerFrame, 200); 
-                        
-                        if (this.holyUltDuration <= 0) {
-                            this.holyUltActive = false;
-                            this.holyCharge = 0;
-                        }
-                    }
-                }
-
-                // Sub-stepping for high speed
                 let speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
                 let stepSize = 5;
                 let steps = Math.ceil(speed / stepSize) || 1;
-                
-                if(this.type === 'x2Speed' || this.type === 'factorialSpeed') steps = Math.max(steps, 8);
+                if(this.type === 'x2Speed' || this.type === 'factorialSpeed' || this.type === 'x2Split') steps = Math.max(steps, 8);
 
                 for (let i = 0; i < steps; i++) {
                     if (this.finished) break;
+                    if (this.isSticking) break;
 
                     this.x += this.vx / steps;
                     this.y += this.vy / steps;
 
-                    // Bounds
-                    if (this.x - this.radius < 0) {
-                        this.x = this.radius;
-                        this.vx *= -1;
-                    } else if (this.x + this.radius > this.canvas.width) {
-                        this.x = this.canvas.width - this.radius;
-                        this.vx *= -1;
-                    }
+                    if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -1; } 
+                    else if (this.x + this.radius > this.canvas.width) { this.x = this.canvas.width - this.radius; this.vx *= -1; }
 
-                    if (this.y - this.radius < 0) {
-                        this.y = this.radius;
-                        this.vy *= -1;
-                    }
+                    if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -1; }
 
                     if (this.y > this.canvas.height + 50) {
                         this.finished = true;
@@ -844,7 +907,6 @@
                         break;
                     }
 
-                    // Wall Collision
                     for (let w of this.walls) {
                         if (!w.isBroken) {
                             let wallX = (parseFloat(w.el.style.left) / 100) * this.canvas.width;
@@ -854,258 +916,165 @@
 
                             let testX = this.x;
                             let testY = this.y;
-
-                            if (this.x < wallX) testX = wallX;
-                            else if (this.x > wallX + wallW) testX = wallX + wallW;
-                            
-                            if (this.y < wallY) testY = wallY;
-                            else if (this.y > wallY + wallH) testY = wallY + wallH;
-
+                            if (this.x < wallX) testX = wallX; else if (this.x > wallX + wallW) testX = wallX + wallW;
+                            if (this.y < wallY) testY = wallY; else if (this.y > wallY + wallH) testY = wallY + wallH;
                             let distX = this.x - testX;
                             let distY = this.y - testY;
                             let dist = Math.sqrt(distX*distX + distY*distY);
 
                             if (dist <= this.radius) {
                                 this.resolveCollision(w, distX, distY);
+                                if (this.isSticking) break; 
                             }
                         }
                     }
                 }
             }
 
-            applyHolyAuraDamage(amount, range) {
-                for (let w of this.walls) {
-                    if (!w.isBroken) {
-                        let dy = Math.abs(this.y - (w.y + 30)); 
-                        if (dy < range) {
-                            w.takeDamage(amount, true);
-                        }
-                    }
-                }
-            }
-
             resolveCollision(wall, dx, dy) {
+                if (this.type === 'sticky') {
+                    this.isSticking = true;
+                    this.stickTarget = wall;
+                    this.stickCount++;
+                    this.stickTimer = this.stickDurationBase + (this.stickCount * 30); 
+                    return;
+                }
+
                 let dmg = this.calculateDamage(wall);
                 const broken = wall.takeDamage(dmg);
-                if (broken && (this.type === 'blackHole')) {
-                    this.onWallDestroyed(wall.maxHp);
-                }
+                if (broken) this.onWallDestroyed(wall.maxHp);
                 this.hits++;
+                
+                // Trigger Gambler Visual Effect
+                if (['godGambler', 'normalGambler', 'madGambler'].includes(this.type)) {
+                    wall.setGamblerEffect(this.config.color);
+                }
 
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 let nx = dx / (dist || 1);
                 let ny = dy / (dist || 1);
-
                 let dot = this.vx * nx + this.vy * ny;
                 this.vx = this.vx - 2 * dot * nx;
                 this.vy = this.vy - 2 * dot * ny;
-
                 this.x += nx * 2;
                 this.y += ny * 2;
-
                 this.vx += (Math.random() - 0.5) * 2;
                 
                 if (this.type === 'speed') {
                     this.currentSpeedMult *= 1.05; 
                     if(this.currentSpeedMult > 3.0) this.currentSpeedMult = 3.0; 
                 }
+                if (this.type === 'blackHole') wall.addGravityPoint(this);
+                if (this.type === 'holyLight') wall.addLightParticle();
+                if (this.type === 'holyLight2') { wall.addLightParticle(); wall.addLightParticle(); }
                 
-                if (this.type === 'blackHole') {
-                    wall.addGravityPoint(this);
+                if (this.type === 'venomPierce') {
+                    this.walls.forEach(w => {
+                        if (!w.isBroken) w.addVenom();
+                    });
                 }
-                
-                if (this.type === 'holyLight') {
-                    this.holyCharge++;
-                    if (this.holyCharge >= 10) {
-                        this.holyUltActive = true;
-                        this.holyUltDuration = 180; 
-                        this.holyCharge = 0; 
+
+                if (this.type === 'x2Split') {
+                    this.damage *= 2n;
+                    if (game.balls.filter(b => b.laneIndex === this.laneIndex).length < 50) {
+                        game.addBall(this.clone());
                     }
                 }
 
                 let currentSpeed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
                 let targetBase = this.baseSpeed * this.currentSpeedMult;
-                
                 let minSpeed = targetBase * 0.8;
                 let maxSpeed = targetBase * 1.5;
-                
-                if (currentSpeed < minSpeed) {
-                    this.vx *= 1.2;
-                    this.vy *= 1.2;
-                } else if (currentSpeed > maxSpeed) {
-                    this.vx *= 0.8;
-                    this.vy *= 0.8;
-                }
+                if (currentSpeed < minSpeed) { this.vx *= 1.2; this.vy *= 1.2; } 
+                else if (currentSpeed > maxSpeed) { this.vx *= 0.8; this.vy *= 0.8; }
             }
 
             calculateDamage(wall) {
                 let d = 0n;
                 switch (this.type) {
-                    case 'x2Speed':
-                        d = this.damage;
-                        this.damage *= 2n;
-                        break;
-
-                    case 'factorialSpeed':
-                        d = this.damage;
-                        this.damage = this.damage * BigInt(this.hits + 1);
-                        break;
-
-                    case 'power':
-                        d = this.damage;
-                        this.damage = this.damage ** 2n;
-                        break;
-
-                    case 'superFactorial':
-                        d = this.damage;
-                        let multiplier = BigInt(this.hits + 1);
-                        this.damage = this.damage * (multiplier * multiplier);
-                        break;
-
-                    case 'infinity':
-                        d = wall.currentHp + 1n; 
-                        break;
-
-                    case 'holyLight':
-                        d = this.damage;
-                        break;
-
-                    case 'blackHole':
+                    case 'sticky': d = 0n; break;
+                    case 'x2Split': d = this.damage; break;
+                    case 'venomPierce': d = this.damage; break;
+                    case 'x2Speed': d = this.damage; this.damage *= 2n; break;
+                    case 'factorialSpeed': d = this.damage; this.damage = this.damage * BigInt(this.hits + 1); break;
+                    case 'power': 
                         d = this.damage; 
+                        if (this.damage < BIG_LIMIT) {
+                            this.damage = this.damage ** 2n; 
+                        }
                         break;
-                    
-                    case 'loopDamage':
-                        d = this.damage;
-                        break;
-
-                    case 'speed':
-                        d = this.damage;
-                        this.damage += 50n;
-                        break;
-                    
-                    case 'godGambler':
+                    case 'superFactorial': d = this.damage; let multiplier = BigInt(this.hits + 1); this.damage = this.damage * (multiplier * multiplier); break;
+                    case 'infinity': d = wall.currentHp + 1n; break;
+                    case 'holyLight': case 'holyLight2': d = this.damage; break;
+                    case 'blackHole': d = this.damage; break;
+                    case 'loopDamage': d = this.damage; break;
+                    case 'speed': d = this.damage; this.damage += 50n; break;
+                    case 'godGambler': 
                         let min = wall.currentHp / 10n;
                         if (min < 1n) min = 1n;
-                        let randExp = Math.floor(Math.random() * 1001); 
+                        let randExp = Math.min(Math.floor(Math.random() * 100000001), EXP_CAP); 
                         let extra = 10n ** BigInt(randExp);
                         d = min + extra;
                         break;
-
                     case 'normalGambler':
-                        d = BigInt(Math.floor(Math.random() * 10000000) + 1); 
+                        let nExp = Math.min(Math.floor(Math.random() * 21), 20);
+                        d = 10n ** BigInt(nExp); 
                         break;
-                    
-                    case 'madGambler':
-                        d = BigInt(Math.floor(Math.random() * 1000000000) + 1); 
+                    case 'madGambler': 
+                        let mExp = Math.min(Math.floor(Math.random() * 101), 100);
+                        d = 10n ** BigInt(mExp);
                         break;
-
-                    case 'goldenRatio':
-                        d = (wall.currentHp * 382n) / 1000n;
-                        if (d < 1n) d = 1n;
-                        break;
-
-                    case 'fibonacci':
-                        let next = this.fibPrev + this.fibCurr;
-                        this.fibPrev = this.fibCurr;
-                        this.fibCurr = next;
-                        d = this.fibCurr;
-                        break;
-                    
-                    case 'selfRefFibonacci':
-                        let nextSelf = this.fibPrev + this.fibCurr;
-                        this.fibPrev = this.fibCurr;
-                        this.fibCurr = nextSelf;
-                        this.fibPrev += this.fibCurr; 
-                        d = this.fibCurr;
-                        break;
-
-                    case 'percentage':
-                        d = (wall.currentHp * 41n) / 1000n;
-                        if (d < 1n) d = 1n;
-                        break;
-
-                    case 'thousand':
-                        d = 1000n;
-                        break;
-
-                    case 'factorial':
-                        d = this.damage;
-                        this.damage = (this.damage * 15n) / 10n;
-                        break;
-
-                    default:
-                        d = this.damage;
-                        this.damage += 100n; 
-                        break;
+                    case 'goldenRatio': d = (wall.currentHp * 382n) / 1000n; if (d < 1n) d = 1n; break;
+                    case 'fibonacci': let next = this.fibPrev + this.fibCurr; this.fibPrev = this.fibCurr; this.fibCurr = next; d = this.fibCurr; break;
+                    case 'selfRefFibonacci': let nextSelf = this.fibPrev + this.fibCurr; this.fibPrev = this.fibCurr; this.fibCurr = nextSelf; this.fibPrev += this.fibCurr; d = this.fibCurr; break;
+                    case 'percentage': d = (wall.currentHp * 41n) / 1000n; if (d < 1n) d = 1n; break;
+                    case 'thousand': d = 1000n; break;
+                    case 'factorial': d = this.damage; this.damage = (this.damage * 15n) / 10n; break;
+                    default: d = this.damage; this.damage += 100n; break;
                 }
                 
                 if (this.type === 'infinity') this.damage = 9999999999n; 
                 if (this.type === 'trueBlackHole') this.damage = 10n ** 100n; 
+
+                if (['normalGambler', 'madGambler'].includes(this.type)) {
+                    this.damage = d;
+                }
                 
                 return d;
             }
 
             draw() {
-                if (this.type === 'trueBlackHole') {
-                    // Special central drawing
-                    // Use global coords approx
-                    // Actually, use this.x/y. If centered, it's width/2.
-                    this.ctx.save();
-                    this.ctx.translate(this.x, this.y);
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, 40, 0, Math.PI * 2); // Big center
-                    this.ctx.fillStyle = '#000';
-                    this.ctx.fill();
-                    // Accretion Disk
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, 60, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = '#A020F0';
-                    this.ctx.lineWidth = 5;
-                    this.ctx.stroke();
-                    this.ctx.shadowBlur = 50;
-                    this.ctx.shadowColor = '#4B0082';
-                    this.ctx.stroke();
-                    this.ctx.restore();
-                    return;
-                }
+                if (this.type === 'trueBlackHole') return;
 
                 this.ctx.beginPath();
                 this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
                 this.ctx.fillStyle = this.config.color;
                 this.ctx.fill();
                 
-                // Visual flair
                 if (this.type === 'blackHole') {
                     this.ctx.strokeStyle = '#8A2BE2';
                     this.ctx.lineWidth = 4;
-                    // Draw Aura
-                    this.ctx.beginPath();
-                    this.ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI*2);
-                    this.ctx.strokeStyle = 'rgba(138, 43, 226, 0.3)';
-                    this.ctx.lineWidth = 1;
-                    this.ctx.stroke();
-                } else if (this.type === 'loopDamage') {
+                } else if (this.type === 'sticky') {
+                    this.ctx.strokeStyle = '#FFA500';
+                    this.ctx.lineWidth = 3;
+                    if(this.isSticking) {
+                        this.ctx.shadowColor = '#FFA500';
+                        this.ctx.shadowBlur = 15;
+                    }
+                } else if (this.type === 'venomPierce') {
                     this.ctx.strokeStyle = '#00FF00';
                     this.ctx.lineWidth = 3;
-                } else if (this.type === 'holyLight') {
-                    this.ctx.strokeStyle = '#FFFF00';
+                    this.ctx.shadowColor = '#00FF00';
+                    this.ctx.shadowBlur = 10;
+                } else if (this.type === 'x2Split') {
+                     this.ctx.strokeStyle = '#AAFFAA';
+                     this.ctx.lineWidth = 2;
+                } else if (this.type === 'holyLight' || this.type === 'holyLight2') {
+                    this.ctx.strokeStyle = (this.type === 'holyLight2') ? '#FFD700' : '#FFFF00';
                     this.ctx.lineWidth = 2;
-                    if (this.holyPassiveActive) {
-                         this.ctx.beginPath();
-                         this.ctx.arc(this.x, this.y, this.radius + 10 + Math.random()*5, 0, Math.PI*2);
-                         this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-                         this.ctx.stroke();
-                    }
-                    if (this.holyUltActive) {
-                         this.ctx.beginPath();
-                         this.ctx.arc(this.x, this.y, this.radius + 40 + Math.random()*10, 0, Math.PI*2);
-                         this.ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-                         this.ctx.fill();
-                         this.ctx.strokeStyle = '#FFD700';
-                         this.ctx.stroke();
-                    }
+                    this.ctx.shadowColor = this.ctx.strokeStyle;
+                    this.ctx.shadowBlur = 15;
                 } else if (this.type === 'absoluteVictory') {
-                    // Shining white
                     this.ctx.shadowBlur = 20;
                     this.ctx.shadowColor = "white";
                     this.ctx.strokeStyle = '#fff';
@@ -1119,22 +1088,14 @@
                 }
                 
                 this.ctx.stroke();
-                this.ctx.shadowBlur = 0; // Reset
-
-                // Inner detail
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.x - this.radius, this.y);
-                this.ctx.lineTo(this.x + this.radius, this.y);
-                this.ctx.strokeStyle = (this.type === 'infinity') ? '#000' : '#000';
-                this.ctx.stroke();
+                this.ctx.shadowBlur = 0;
             }
         }
-
-        // --- Game Controller ---
 
         const game = {
             active: false,
             balls: [],
+            newBalls: [],
             walls: [[], []],
             loopId: null,
             frame: 0,
@@ -1143,30 +1104,34 @@
             init() {
                 document.getElementById('startBtn').addEventListener('click', () => this.start());
                 document.getElementById('restartBtn').addEventListener('click', () => this.reset());
-                
                 document.getElementById('themeBtn').addEventListener('click', () => {
                    const html = document.documentElement;
                    const current = html.getAttribute('data-theme');
                    html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
                 });
-
                 window.addEventListener('resize', () => {
                     this.balls.forEach(b => b.resize());
+                    this.resizeTrueBlackHoleCanvas();
                 });
+                this.resizeTrueBlackHoleCanvas();
+            },
+
+            resizeTrueBlackHoleCanvas() {
+                const c = document.getElementById('trueBlackHoleVisual');
+                c.width = window.innerWidth;
+                c.height = window.innerHeight;
             },
 
             reset() {
                 this.active = false;
                 cancelAnimationFrame(this.loopId);
-                
                 document.getElementById('p1Walls').innerHTML = '';
                 document.getElementById('p2Walls').innerHTML = '';
                 document.getElementById('gameContainer').classList.remove('singularity-mode');
+                document.getElementById('trueBlackHoleVisual').style.display = 'none';
                 this.singularityMode = false;
-                
                 document.getElementById('gameOverPanel').classList.add('hidden');
                 document.getElementById('menuPanel').classList.remove('hidden');
-                
                 const c1 = document.getElementById('c1').getContext('2d');
                 const c2 = document.getElementById('c2').getContext('2d');
                 c1.clearRect(0,0,10000,10000);
@@ -1176,7 +1141,6 @@
 
             start() {
                 document.getElementById('menuPanel').classList.add('hidden');
-                
                 const p1Type = document.getElementById('p1Select').value;
                 const p2Type = document.getElementById('p2Select').value;
                 const diffMode = document.getElementById('difficultySelect').value;
@@ -1185,23 +1149,21 @@
                 this.walls = [[], []];
                 this.balls = [];
 
-                // Create Walls
                 exponents.forEach((exp, i) => {
                     this.walls[0].push(new Wall(exp, i, 0));
                     this.walls[1].push(new Wall(exp, i, 1));
                 });
 
-                // Create Balls
                 this.balls.push(new Ball(p1Type, 0, this.walls[0], 'c1'));
                 this.balls.push(new Ball(p2Type, 1, this.walls[1], 'c2'));
 
                 this.balls.forEach(b => b.resize());
                 
-                // Update UI Names
-                document.getElementById('p1Name').innerText = BALL_TYPES[p1Type].name;
+                const p1Name = BALL_TYPES[p1Type].name;
+                const p2Name = BALL_TYPES[p2Type].name;
+                document.getElementById('p1Name').innerText = p1Name;
                 document.getElementById('p1Name').style.color = BALL_TYPES[p1Type].color;
-                
-                document.getElementById('p2Name').innerText = BALL_TYPES[p2Type].name;
+                document.getElementById('p2Name').innerText = p2Name;
                 document.getElementById('p2Name').style.color = BALL_TYPES[p2Type].color;
 
                 this.active = true;
@@ -1209,40 +1171,82 @@
                 this.loop();
             },
 
+            addBall(ball) {
+                this.newBalls.push(ball);
+            },
+
             triggerSingularity(ball) {
                 this.singularityMode = true;
                 document.getElementById('gameContainer').classList.add('singularity-mode');
-                ball.x = window.innerWidth / 2;
-                // Don't set Y here, let Ball constructor handle or let it be centered
-                ball.y = window.innerHeight / 2;
+                const overlay = document.getElementById('trueBlackHoleVisual');
+                overlay.style.display = 'block';
+            },
+
+            drawTrueBlackHole(ball) {
+                const ctx = document.getElementById('trueBlackHoleVisual').getContext('2d');
+                const w = ctx.canvas.width;
+                const h = ctx.canvas.height;
+                ctx.clearRect(0, 0, w, h);
+                const centerX = w / 2;
+                const centerY = h / 2;
+                
+                if (!ball.isSingularityActive) {
+                    let progress = ball.tbhTimer / 60;
+                    let yPos = (h/3) + (centerY - h/3) * progress;
+                    ctx.save();
+                    ctx.translate(centerX, yPos);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 20 * progress, 0, Math.PI * 2);
+                    ctx.fillStyle = '#000';
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
+                    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.strokeStyle = '#8A2BE2'; ctx.lineWidth = 6; ctx.stroke();
+                    ctx.shadowBlur = 50; ctx.shadowColor = '#4B0082'; ctx.stroke();
+                    ctx.restore();
+                }
             },
 
             loop() {
                 if (!this.active) return;
                 this.frame++;
-
-                this.balls.forEach(b => b.ctx.clearRect(0,0, b.canvas.width, b.canvas.height));
                 
-                // Special handling for singularity: Both lanes update, but visually they are sucked
-                let singularityBall = this.balls.find(b => b.type === 'trueBlackHole');
+                if (this.newBalls.length > 0) {
+                    this.balls = this.balls.concat(this.newBalls);
+                    this.newBalls = [];
+                }
 
-                // Update walls (Singularity affects ALL walls)
+                const c1 = document.getElementById('c1').getContext('2d');
+                const c2 = document.getElementById('c2').getContext('2d');
+                c1.clearRect(0,0,c1.canvas.width, c1.canvas.height);
+                c2.clearRect(0,0,c2.canvas.width, c2.canvas.height);
+                
+                let singularityBall = this.balls.find(b => b.type === 'trueBlackHole');
+                if (singularityBall) {
+                    this.drawTrueBlackHole(singularityBall);
+                    if (singularityBall.isSingularityActive) {
+                        this.balls.forEach(b => { if (b !== singularityBall) { b.vx = 0; b.vy = 0; } });
+                    }
+                }
+
                 this.walls.forEach(lane => lane.forEach(w => w.update(singularityBall)));
                 
                 this.balls.forEach((b, i) => {
                     b.update();
                     b.draw();
-                    let dmgText = "";
-                    if (['godGambler','goldenRatio','percentage'].includes(b.type)) {
-                        dmgText = "???";
-                    } else if (b.type === 'infinity') {
-                        dmgText = "∞";
-                    } else if (b.type === 'absoluteVictory' || b.type === 'trueBlackHole') {
-                        dmgText = "∞";
-                    } else {
-                        dmgText = formatBigInt(b.damage);
+                    if (i < 2) { 
+                        let dmgText = "";
+                        if (['godGambler','goldenRatio','percentage'].includes(b.type)) dmgText = "???";
+                        else if (b.type === 'infinity' || b.type === 'trueBlackHole' || b.type === 'absoluteVictory') dmgText = "∞";
+                        else dmgText = formatBigInt(b.damage);
+                        
+                        const targetId = b.laneIndex === 0 ? 'p1Dmg' : 'p2Dmg';
+                        const el = document.getElementById(targetId);
+                        if(el) el.innerText = `DMG: ${dmgText}`;
                     }
-                    document.getElementById(i===0 ? 'p1Dmg' : 'p2Dmg').innerText = `DMG: ${dmgText}`;
                 });
 
                 this.loopId = requestAnimationFrame(() => this.loop());
@@ -1251,30 +1255,20 @@
             endGame(winnerBall) {
                 this.active = false;
                 cancelAnimationFrame(this.loopId);
-                
                 const panel = document.getElementById('gameOverPanel');
                 const title = document.getElementById('winnerText');
                 const stats = document.getElementById('statsText');
-                
                 panel.classList.remove('hidden');
-                
                 const winnerName = winnerBall.laneIndex === 0 ? "LEFT PLAYER" : "RIGHT PLAYER";
                 title.innerText = winnerName;
                 title.style.color = winnerBall.config.color;
-                
                 let finalDmg = (winnerBall.type === 'infinity' || winnerBall.type === 'trueBlackHole') ? "∞" : formatBigInt(winnerBall.damage);
                 if (winnerBall.type === 'absoluteVictory') finalDmg = "INSTANT WIN";
-
-                stats.innerHTML = `
-                    BALL: ${winnerBall.config.name}<br>
-                    HITS: ${winnerBall.hits}<br>
-                    FINAL DMG: ${finalDmg}
-                `;
+                stats.innerHTML = `BALL: ${winnerBall.config.name}<br>FINAL DMG: ${finalDmg}`;
             }
         };
 
         game.init();
-
     </script>
 </body>
 </html>
