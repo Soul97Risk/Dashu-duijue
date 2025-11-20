@@ -97,7 +97,7 @@
             position: absolute;
             left: 5%;
             width: 90%;
-            height: 40px;
+            height: 60px; /* 加厚墙壁防止高速穿透 */
             background: #fff;
             display: flex;
             justify-content: center;
@@ -106,7 +106,13 @@
             font-weight: bold;
             font-size: 12px;
             box-shadow: 0 0 10px rgba(255,255,255,0.2);
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.1s;
+            border-radius: 4px;
+        }
+
+        .wall.gravitized {
+            border: 2px solid #9400D3;
+            box-shadow: 0 0 10px #9400D3;
         }
 
         .wall-label {
@@ -174,6 +180,19 @@
         }
         select:hover { border-color: #666; }
         select:focus { border-color: #fff; }
+        
+        /* Optgroup styling adjustment for some browsers */
+        optgroup {
+            background: #111;
+            color: #aaa;
+            font-style: normal;
+            font-weight: bold;
+        }
+        option {
+            background: #1a1a1a;
+            color: #fff;
+            padding-left: 10px;
+        }
 
         button {
             width: 100%;
@@ -232,45 +251,71 @@
 
     <!-- Start Menu -->
     <div id="menuPanel" class="ui-panel">
-        <h1 class="text-2xl font-bold mb-6 text-white">ULTIMATE DUEL<br><span class="text-xs font-normal text-gray-500">大数破壁</span></h1>
+        <h1 class="text-2xl font-bold mb-6 text-white">ULTIMATE DUEL<br><span class="text-xs font-normal text-gray-500">大数破壁：究极对决</span></h1>
         
         <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <div class="lane-title">LEFT LANE</div>
                 <label>Ball Type</label>
                 <select id="p1Select">
-                    <option value="godGambler">上帝赌徒球 (God Gambler)</option>
-                    <option value="speed">速度球 (Speed Boost)</option>
-                    <option value="infinity">无限球 (Infinity)</option>
-                    <option value="holyLight">圣光球 (Holy Light)</option>
-                    <option value="blackHole">黑洞球 (Black Hole)</option>
-                    <option value="normalGambler">普通赌徒球 (Gambler)</option>
-                    <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
-                    <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
-                    <option value="fibonacci">斐波那契球 (Fibonacci)</option>
-                    <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
-                    <option value="percentage">百分比球 (Percentage)</option>
-                    <option value="thousand">1000球 (Thousand)</option>
-                    <option value="factorial">自我阶乘球 (Factorial)</option>
+                    <optgroup label=">>> 速度类型 (Speed)">
+                        <option value="speed">速度球 (Speed Boost)</option>
+                        <option value="x2Speed">X2速度球 (X2 Speed)</option>
+                        <option value="factorialSpeed">阶乘速度球 (Factorial Speed)</option>
+                    </optgroup>
+                    <optgroup label=">>> 自乘类型 (Growth)">
+                        <option value="factorial">自我阶乘球 (Factorial)</option>
+                        <option value="power">幂球 (Power Ball)</option>
+                        <option value="superFactorial">超阶乘球 (Super Factorial)</option>
+                        <option value="fibonacci">斐波那契球 (Fibonacci)</option>
+                        <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
+                    </optgroup>
+                    <optgroup label=">>> 赌徒类型 (Gambler)">
+                        <option value="godGambler">上帝赌徒球 (God Gambler)</option>
+                        <option value="normalGambler">普通赌徒球 (Gambler)</option>
+                        <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
+                    </optgroup>
+                    <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
+                        <option value="infinity">无限球 (Infinity)</option>
+                        <option value="blackHole">黑洞球 (Black Hole)</option>
+                        <option value="holyLight">圣光球 (Holy Light)</option>
+                        <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
+                        <option value="percentage">百分比球 (Percentage)</option>
+                        <option value="thousand">1000球 (Thousand)</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="form-group">
                 <div class="lane-title">RIGHT LANE</div>
                 <label>Ball Type</label>
                 <select id="p2Select">
-                    <option value="godGambler">上帝赌徒球 (God Gambler)</option>
-                    <option value="blackHole">黑洞球 (Black Hole)</option>
-                    <option value="infinity">无限球 (Infinity)</option>
-                    <option value="speed">速度球 (Speed Boost)</option>
-                    <option value="holyLight">圣光球 (Holy Light)</option>
-                    <option value="normalGambler">普通赌徒球 (Gambler)</option>
-                    <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
-                    <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
-                    <option value="fibonacci">斐波那契球 (Fibonacci)</option>
-                    <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
-                    <option value="percentage">百分比球 (Percentage)</option>
-                    <option value="thousand">1000球 (Thousand)</option>
-                    <option value="factorial">自我阶乘球 (Factorial)</option>
+                    <optgroup label=">>> 速度类型 (Speed)">
+                        <option value="speed">速度球 (Speed Boost)</option>
+                        <option value="x2Speed">X2速度球 (X2 Speed)</option>
+                        <option value="factorialSpeed">阶乘速度球 (Factorial Speed)</option>
+                    </optgroup>
+                    <optgroup label=">>> 自乘类型 (Growth)">
+                        <option value="factorial">自我阶乘球 (Factorial)</option>
+                        <option value="power">幂球 (Power Ball)</option>
+                        <option value="superFactorial">超阶乘球 (Super Factorial)</option>
+                        <option value="fibonacci">斐波那契球 (Fibonacci)</option>
+                        <option value="selfRefFibonacci">自指斐波那契 (Self-Ref Fib)</option>
+                    </optgroup>
+                    <optgroup label=">>> 赌徒类型 (Gambler)">
+                        <option value="godGambler">上帝赌徒球 (God Gambler)</option>
+                        <option value="normalGambler">普通赌徒球 (Gambler)</option>
+                        <option value="madGambler">疯狂赌徒球 (Mad Gambler)</option>
+                    </optgroup>
+                    <optgroup label=">>> 特殊类型 (Special)">
+                        <option value="absoluteVictory">绝对胜利球 (Absolute Victory)</option>
+                        <option value="infinity">无限球 (Infinity)</option>
+                        <option value="blackHole">黑洞球 (Black Hole)</option>
+                        <option value="holyLight">圣光球 (Holy Light)</option>
+                        <option value="goldenRatio">黄金分割球 (Golden Ratio)</option>
+                        <option value="percentage">百分比球 (Percentage)</option>
+                        <option value="thousand">1000球 (Thousand)</option>
+                    </optgroup>
                 </select>
             </div>
         </div>
@@ -337,9 +382,17 @@
         };
 
         const BALL_TYPES = {
-            speed: { name: "速度球", color: "#00FFFF", baseDamage: 100n, speed: 1.2 },
+            // New / Modified Balls
+            x2Speed: { name: "X2速度球", color: "#0000FF", baseDamage: 10n, speed: 2.0 }, // Starts low, doubles every hit
+            factorialSpeed: { name: "阶乘速度球", color: "#FF4500", baseDamage: 1n, speed: 1.8 }, // Speed + Factorial Growth
+            power: { name: "幂球", color: "#800080", baseDamage: 2n, speed: 1.0 }, // Squares damage every hit
+            superFactorial: { name: "超阶乘球", color: "#8B0000", baseDamage: 1n, speed: 1.0 }, // Grows absurdly fast
+            absoluteVictory: { name: "绝对胜利球", color: "#FFFFFF", baseDamage: 0n, speed: 0.5 }, // Instant Win
+
+            // Existing
+            speed: { name: "速度球", color: "#00FFFF", baseDamage: 100n, speed: 1.3 },
             infinity: { name: "无限球", color: "#FFFFFF", baseDamage: 999n, speed: 1.0 },
-            holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 100n, speed: 1.0 },
+            holyLight: { name: "圣光球", color: "#FFFACD", baseDamage: 500n, speed: 0.9 },
             blackHole: { name: "黑洞球", color: "#9400D3", baseDamage: 100n, speed: 0.9 },
             godGambler: { name: "上帝赌徒", color: "#FFD700", baseDamage: 1n, speed: 1.0 },
             normalGambler: { name: "普通赌徒", color: "#FFA500", baseDamage: 1n, speed: 1.0 },
@@ -379,10 +432,32 @@
 
                 document.getElementById(laneId === 0 ? 'p1Walls' : 'p2Walls').appendChild(this.el);
                 this.shakeTimer = 0;
+                
+                this.gravityPoints = [];
+            }
+
+            addGravityPoint() {
+                this.gravityPoints.push(180);
+                this.el.classList.add('gravitized');
             }
 
             update() {
                 if (this.isBroken) return;
+
+                if (this.gravityPoints.length > 0) {
+                    this.gravityPoints = this.gravityPoints.filter(t => t > 0).map(t => t - 1);
+                    
+                    let totalPoints = BigInt(this.gravityPoints.length);
+                    if (totalPoints > 0n && this.currentHp > 0n) {
+                        let dmgPerFrame = (this.currentHp * totalPoints) / 6000n;
+                        if (dmgPerFrame < 1n) dmgPerFrame = 1n;
+                        this.takeDamage(dmgPerFrame, true); 
+                    }
+
+                    if (this.gravityPoints.length === 0) {
+                        this.el.classList.remove('gravitized');
+                    }
+                }
 
                 let renderY = this.y;
                 if (this.shakeTimer > 0) {
@@ -390,15 +465,16 @@
                     this.el.style.backgroundColor = '#ffcccc';
                     this.shakeTimer--;
                 } else {
-                    this.el.style.backgroundColor = '#fff';
+                    this.el.style.backgroundColor = this.gravityPoints.length > 0 ? '#2a0a3d' : '#fff';
+                    this.el.style.color = this.gravityPoints.length > 0 ? '#fff' : '#000';
                 }
                 this.el.style.transform = `translateY(${renderY - this.y}px)`;
             }
 
-            takeDamage(amount) {
+            takeDamage(amount, isDot = false) {
                 if (this.isBroken) return;
                 this.currentHp -= amount;
-                this.shakeTimer = 5;
+                if (!isDot) this.shakeTimer = 5;
 
                 if (this.currentHp <= 0n) {
                     this.currentHp = 0n;
@@ -426,15 +502,22 @@
                 this.radius = 10;
                 this.x = this.canvas.width / 2;
                 this.y = 50;
-                // Speed management
+                
                 this.baseSpeed = 8 * this.config.speed; 
-                this.currentSpeedMult = 1.0; // Multiplier for Speed Ball
+                this.currentSpeedMult = 1.0; 
                 
                 this.vx = (Math.random() - 0.5) * 4;
                 this.vy = this.baseSpeed;
 
                 this.fibPrev = 1n;
                 this.fibCurr = 1n;
+
+                this.holyPassiveTimer = 0; 
+                this.holyPassiveActive = false;
+                this.holyPassiveDuration = 0; 
+                this.holyCharge = 0;
+                this.holyUltActive = false;
+                this.holyUltDuration = 0; 
             }
 
             resize() {
@@ -445,61 +528,123 @@
             update() {
                 if (this.finished) return;
 
-                this.x += this.vx;
-                this.y += this.vy;
-
-                if (this.x - this.radius < 0) {
-                    this.x = this.radius;
-                    this.vx *= -1;
-                } else if (this.x + this.radius > this.canvas.width) {
-                    this.x = this.canvas.width - this.radius;
-                    this.vx *= -1;
-                }
-
-                if (this.y - this.radius < 0) {
-                    this.y = this.radius;
-                    this.vy *= -1;
-                }
-
-                if (this.y > this.canvas.height + 50) {
-                    this.finished = true;
+                // Absolute Victory Check
+                if (this.type === 'absoluteVictory') {
                     game.endGame(this);
+                    return;
                 }
 
+                // Holy Light Passive
+                if (this.type === 'holyLight') {
+                    this.holyPassiveTimer++;
+                    if (this.holyPassiveTimer >= 180) {
+                        this.holyPassiveActive = true;
+                        this.holyPassiveDuration = 60; 
+                        this.holyPassiveTimer = 0;
+                    }
+
+                    if (this.holyPassiveActive) {
+                        this.holyPassiveDuration--;
+                        if (this.holyPassiveDuration % 6 === 0) {
+                            this.applyHolyAuraDamage(1000n, 100); 
+                        }
+                        if (this.holyPassiveDuration <= 0) {
+                            this.holyPassiveActive = false;
+                        }
+                    }
+
+                    if (this.holyUltActive) {
+                        this.holyUltDuration--;
+                        let dmgPerFrame = 10000n / 60n; 
+                        if (dmgPerFrame < 1n) dmgPerFrame = 1n;
+                        this.applyHolyAuraDamage(dmgPerFrame, 200); 
+                        
+                        if (this.holyUltDuration <= 0) {
+                            this.holyUltActive = false;
+                            this.holyCharge = 0;
+                        }
+                    }
+                }
+
+                // Sub-stepping for high speed
+                let speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+                let stepSize = 5;
+                let steps = Math.ceil(speed / stepSize) || 1;
+                
+                // Extra steps for extremely fast new balls
+                if(this.type === 'x2Speed' || this.type === 'factorialSpeed') steps = Math.max(steps, 8);
+
+                for (let i = 0; i < steps; i++) {
+                    if (this.finished) break;
+
+                    this.x += this.vx / steps;
+                    this.y += this.vy / steps;
+
+                    // Bounds
+                    if (this.x - this.radius < 0) {
+                        this.x = this.radius;
+                        this.vx *= -1;
+                    } else if (this.x + this.radius > this.canvas.width) {
+                        this.x = this.canvas.width - this.radius;
+                        this.vx *= -1;
+                    }
+
+                    if (this.y - this.radius < 0) {
+                        this.y = this.radius;
+                        this.vy *= -1;
+                    }
+
+                    if (this.y > this.canvas.height + 50) {
+                        this.finished = true;
+                        game.endGame(this);
+                        break;
+                    }
+
+                    // Wall Collision
+                    for (let w of this.walls) {
+                        if (!w.isBroken) {
+                            let wallX = (parseFloat(w.el.style.left) / 100) * this.canvas.width;
+                            let wallW = (parseFloat(w.el.style.width) / 100) * this.canvas.width;
+                            let wallY = w.y;
+                            let wallH = 60;
+
+                            let testX = this.x;
+                            let testY = this.y;
+
+                            if (this.x < wallX) testX = wallX;
+                            else if (this.x > wallX + wallW) testX = wallX + wallW;
+                            
+                            if (this.y < wallY) testY = wallY;
+                            else if (this.y > wallY + wallH) testY = wallY + wallH;
+
+                            let distX = this.x - testX;
+                            let distY = this.y - testY;
+                            let dist = Math.sqrt(distX*distX + distY*distY);
+
+                            if (dist <= this.radius) {
+                                this.resolveCollision(w, distX, distY);
+                            }
+                        }
+                    }
+                }
+            }
+
+            applyHolyAuraDamage(amount, range) {
                 for (let w of this.walls) {
                     if (!w.isBroken) {
-                        let wallX = (parseFloat(w.el.style.left) / 100) * this.canvas.width;
-                        let wallW = (parseFloat(w.el.style.width) / 100) * this.canvas.width;
-                        let wallY = w.y;
-                        let wallH = 40;
-
-                        let testX = this.x;
-                        let testY = this.y;
-
-                        if (this.x < wallX) testX = wallX;
-                        else if (this.x > wallX + wallW) testX = wallX + wallW;
-                        
-                        if (this.y < wallY) testY = wallY;
-                        else if (this.y > wallY + wallH) testY = wallY + wallH;
-
-                        let distX = this.x - testX;
-                        let distY = this.y - testY;
-                        let dist = Math.sqrt(distX*distX + distY*distY);
-
-                        if (dist <= this.radius) {
-                            this.resolveCollision(w, distX, distY);
+                        let dy = Math.abs(this.y - (w.y + 30)); 
+                        if (dy < range) {
+                            w.takeDamage(amount, true);
                         }
                     }
                 }
             }
 
             resolveCollision(wall, dx, dy) {
-                // 1. Calc Damage
                 let dmg = this.calculateDamage(wall);
                 wall.takeDamage(dmg);
                 this.hits++;
 
-                // 2. Bounce
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 let nx = dx / (dist || 1);
                 let ny = dy / (dist || 1);
@@ -513,11 +658,25 @@
 
                 this.vx += (Math.random() - 0.5) * 2;
                 
-                // 3. Speed Logic
+                // Speed Ball logic
                 if (this.type === 'speed') {
-                    // Speed up!
-                    this.currentSpeedMult *= 1.05; // +5% per hit
-                    if(this.currentSpeedMult > 3.0) this.currentSpeedMult = 3.0; // Cap at 3x
+                    this.currentSpeedMult *= 1.05; 
+                    if(this.currentSpeedMult > 3.0) this.currentSpeedMult = 3.0; 
+                }
+                
+                // Black Hole Logic
+                if (this.type === 'blackHole') {
+                    wall.addGravityPoint();
+                }
+                
+                // Holy Light Logic
+                if (this.type === 'holyLight') {
+                    this.holyCharge++;
+                    if (this.holyCharge >= 10) {
+                        this.holyUltActive = true;
+                        this.holyUltDuration = 180; 
+                        this.holyCharge = 0; 
+                    }
                 }
 
                 let currentSpeed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
@@ -538,43 +697,55 @@
             calculateDamage(wall) {
                 let d = 0n;
                 switch (this.type) {
+                    case 'x2Speed':
+                        // Starts low, doubles every hit
+                        d = this.damage;
+                        this.damage *= 2n;
+                        break;
+
+                    case 'factorialSpeed':
+                        // n! growth
+                        d = this.damage;
+                        this.damage = this.damage * BigInt(this.hits + 1);
+                        break;
+
+                    case 'power':
+                        // Squares damage every hit (Exponent)
+                        d = this.damage;
+                        // Prevent instant infinity crash, cap it logically or just let BigInt handle it
+                        // Start 2 -> 4 -> 16 -> 256
+                        this.damage = this.damage ** 2n;
+                        break;
+
+                    case 'superFactorial':
+                        // Approximated as dmg * (hits)^something big or recursive
+                        d = this.damage;
+                        let multiplier = BigInt(this.hits + 1);
+                        this.damage = this.damage * (multiplier * multiplier);
+                        break;
+
                     case 'infinity':
-                        // Instantly breaks wall
                         d = wall.currentHp + 1n; 
                         break;
 
                     case 'holyLight':
-                        // 50% of Max HP fixed damage (Always breaks in 2 hits)
-                        d = wall.maxHp / 2n;
-                        if (d < 1n) d = 1n;
-                        // Bonus if HP is very low, execute it
-                        if (wall.currentHp < wall.maxHp / 10n) d = wall.currentHp + 1n;
+                        d = this.damage;
                         break;
 
                     case 'blackHole':
-                        // Starts small, grows exponentially (x10 per hit)
-                        // Base damage is 100
-                        d = this.damage;
-                        this.damage = this.damage * 10n;
+                        d = this.damage; 
                         break;
 
                     case 'speed':
                         d = this.damage;
-                        // Slight damage increase, but main power is speed
                         this.damage += 50n;
                         break;
-
+                    
                     case 'godGambler':
-                        // NEW LOGIC:
-                        // 1. Guaranteed 10% of current HP
                         let min = wall.currentHp / 10n;
                         if (min < 1n) min = 1n;
-                        
-                        // 2. Random extra damage with practically infinite limit (10^0 to 10^1000)
-                        // This covers far beyond the max wall HP of 10^500
                         let randExp = Math.floor(Math.random() * 1001); 
                         let extra = 10n ** BigInt(randExp);
-                        
                         d = min + extra;
                         break;
 
@@ -626,12 +797,7 @@
                         break;
                 }
                 
-                // Update displayed damage state for balls that have "state" damage
-                if(!['godGambler','goldenRatio','percentage','infinity','holyLight'].includes(this.type)) {
-                     // Keep damage updated
-                }
-                // Special display handling for Infinity
-                if (this.type === 'infinity') this.damage = 9999999999n; // Just for display
+                if (this.type === 'infinity') this.damage = 9999999999n; 
                 
                 return d;
             }
@@ -642,22 +808,39 @@
                 this.ctx.fillStyle = this.config.color;
                 this.ctx.fill();
                 
-                // Visual flair based on type
+                // Visual flair
                 if (this.type === 'blackHole') {
                     this.ctx.strokeStyle = '#8A2BE2';
                     this.ctx.lineWidth = 4;
                 } else if (this.type === 'holyLight') {
                     this.ctx.strokeStyle = '#FFFF00';
-                    this.ctx.lineWidth = 4;
-                    this.ctx.shadowBlur = 10;
+                    this.ctx.lineWidth = 2;
+                    if (this.holyPassiveActive) {
+                         this.ctx.beginPath();
+                         this.ctx.arc(this.x, this.y, this.radius + 10 + Math.random()*5, 0, Math.PI*2);
+                         this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                         this.ctx.stroke();
+                    }
+                    if (this.holyUltActive) {
+                         this.ctx.beginPath();
+                         this.ctx.arc(this.x, this.y, this.radius + 40 + Math.random()*10, 0, Math.PI*2);
+                         this.ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+                         this.ctx.fill();
+                         this.ctx.strokeStyle = '#FFD700';
+                         this.ctx.stroke();
+                    }
+                } else if (this.type === 'absoluteVictory') {
+                    // Shining white
+                    this.ctx.shadowBlur = 20;
                     this.ctx.shadowColor = "white";
+                    this.ctx.strokeStyle = '#fff';
+                    this.ctx.lineWidth = 3;
                 } else if (this.type === 'infinity') {
                     this.ctx.strokeStyle = '#000';
                     this.ctx.lineWidth = 2;
                 } else {
                     this.ctx.lineWidth = 2;
                     this.ctx.strokeStyle = '#fff';
-                    this.ctx.shadowBlur = 0;
                 }
                 
                 this.ctx.stroke();
@@ -749,10 +932,12 @@
                     b.update();
                     b.draw();
                     let dmgText = "";
-                    if (['godGambler','goldenRatio','percentage','holyLight'].includes(b.type)) {
+                    if (['godGambler','goldenRatio','percentage'].includes(b.type)) {
                         dmgText = "???";
                     } else if (b.type === 'infinity') {
                         dmgText = "∞";
+                    } else if (b.type === 'absoluteVictory') {
+                        dmgText = "WIN";
                     } else {
                         dmgText = formatBigInt(b.damage);
                     }
@@ -777,7 +962,8 @@
                 title.style.color = winnerBall.config.color;
                 
                 let finalDmg = (winnerBall.type === 'infinity') ? "∞" : formatBigInt(winnerBall.damage);
-                
+                if (winnerBall.type === 'absoluteVictory') finalDmg = "INSTANT WIN";
+
                 stats.innerHTML = `
                     BALL: ${winnerBall.config.name}<br>
                     HITS: ${winnerBall.hits}<br>
